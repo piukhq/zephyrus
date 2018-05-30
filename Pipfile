@@ -6,11 +6,12 @@ name = "pypi"
 [packages]
 flask = "*"
 flask-script = "*"
-pytest = "*"
 python-dotenv = "*"
 flask-restplus = "*"
 
 [dev-packages]
+pytest = "*"
+pytest-cov = "*"
 
 [requires]
 python_version = "3.6"
