@@ -23,6 +23,7 @@ class ClientInfo:
         try:
             resp = requests.get(url, headers={'Authorization': f'token {SERVICE_API_KEY}'})
             data = resp.json()
+
             # TODO: validate response. (format, correct keys etc.)
 
             self._set_clients(data)

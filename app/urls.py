@@ -1,6 +1,7 @@
 from flask_restplus import Api
 
-from app.views import Amex, MasterCard, Auth
+from app.authentication.amex import Auth
+from app.views import Amex, MasterCard
 
 api = Api()
 
