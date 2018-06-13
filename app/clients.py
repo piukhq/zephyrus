@@ -6,7 +6,7 @@ import requests
 
 import settings
 from app import redis_store
-from app.errors import CONNECTION_ERROR, CustomException
+from app.errors import CONNECTION_ERROR, CustomException, CLIENT_DOES_NOT_EXIST
 from settings import HERMES_URL, SERVICE_API_KEY
 
 
@@ -16,7 +16,6 @@ class ClientInfo:
     def __init__(self):
         if self.is_stale():
             self.data = self.update_client_apps()
-            self._set_clients_last_saved()
 
     def update_client_apps(self):
         url = f'{HERMES_URL}/payment_cards/client_apps'
@@ -36,19 +35,22 @@ class ClientInfo:
     @staticmethod
     def is_stale():
         try:
-            stored_timestamp = float(redis_store.get(f"auth-transactions:clients-last-saved"))
+            stored_timestamp = float(ClientInfo._get(f"auth-transactions:clients-last-saved"))
             current_timestamp = time.time()
 
             return (current_timestamp - stored_timestamp) > (settings.CLIENT_INFO_STORAGE_TIMEOUT * 60)
         except TypeError:
             return True
-        except redis.exceptions.ConnectionError as e:
-            raise CustomException(CONNECTION_ERROR, message="Error connecting to Redis.") from e
 
     @staticmethod
     def get_client(client_id):
-        client = redis_store.get(f"auth-transactions:{client_id}")
-        return json.loads(client.decode('utf-8'))
+        try:
+            client = ClientInfo._get(f"auth-transactions:{client_id}")
+            client_data = json.loads(client.decode('utf-8'))
+        except AttributeError as e:
+            raise CustomException(CLIENT_DOES_NOT_EXIST) from e
+
+        return client_data
 
     @staticmethod
     def _set_clients(clients):
@@ -57,13 +59,26 @@ class ClientInfo:
         :param clients: List of dicts e.g [{'client_id': '123sd', 'client_secret: '1qa1', 'organisation': 'Amex
         '"""
         for client in clients:
-            redis_store.set(f"auth-transactions:{client['client_id']}", json.dumps(client))
-
+            ClientInfo._set(f"auth-transactions:{client['client_id']}", json.dumps(client))
         return True
 
     @staticmethod
     def _set_clients_last_saved():
         timestamp = time.time()
-        redis_store.set(f"auth-transactions:clients-last-saved", timestamp)
+        ClientInfo._set(f"auth-transactions:clients-last-saved", timestamp)
 
+    @staticmethod
+    def _redis_handler(func, *args):
+        try:
+            return func(*args)
+        except redis.exceptions.ConnectionError as e:
+            raise CustomException(CONNECTION_ERROR, message="Error connecting to Redis.") from e
 
+    @staticmethod
+    def _get(key):
+        return ClientInfo._redis_handler(redis_store.get, key)
+
+    @staticmethod
+    def _set(key, val):
+        ClientInfo._redis_handler(redis_store.set, key, val)
+        return True

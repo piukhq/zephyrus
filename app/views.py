@@ -2,7 +2,7 @@ from flask import request, jsonify, make_response
 from flask_restplus import Resource
 
 from app.clients import ClientInfo
-from app.errors import error_response, CLIENT_DOES_NOT_EXIST, CLIENT_SECRET_DOES_NOT_MATCH
+from app.errors import CLIENT_SECRET_DOES_NOT_MATCH, CustomException
 
 
 class Auth(Resource):
@@ -10,22 +10,15 @@ class Auth(Resource):
         client_id = request.json['client_id']
         client_secret = request.json['client_secret']
 
-        try:
-            client_info_store = ClientInfo()
-            client = client_info_store.get_client(client_id)
+        client_info_store = ClientInfo()
+        client = client_info_store.get_client(client_id)
 
-            if client['secret'] == client_secret:
-                result = jsonify(client)
-            else:
-                result = error_response(CLIENT_SECRET_DOES_NOT_MATCH)
-        except AttributeError as e:
-            result = error_response(CLIENT_DOES_NOT_EXIST)
-
-        # If data, check if secret matches
+        if client['secret'] != client_secret:
+            raise CustomException(CLIENT_SECRET_DOES_NOT_MATCH)
 
         # if match, generate and return token/api key, else return error
 
-        return make_response(result)
+        return make_response(jsonify(client))
 
 
 class Amex(Resource):
