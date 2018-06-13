@@ -9,6 +9,8 @@ flask-script = "*"
 pytest = "*"
 python-dotenv = "*"
 flask-restplus = "*"
+requests = "*"
+flask-redis = "*"
 
 [dev-packages]
 
