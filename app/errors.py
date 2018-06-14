@@ -1,4 +1,4 @@
-from flask import jsonify
+
 
 CLIENT_DOES_NOT_EXIST = 'CLIENT_DOES_NOT_EXIST'
 INVALID_CLIENT_SECRET = 'CLIENT_SECRET_DOES_NOT_MATCH'
@@ -84,4 +84,3 @@ class CustomException(Exception):
 
 class AuthException(CustomException):
     pass
-

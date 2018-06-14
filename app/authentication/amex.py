@@ -104,4 +104,3 @@ def jwt_auth(f):
 
         return f(*args, **kwargs)
     return check_auth
-
