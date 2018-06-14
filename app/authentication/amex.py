@@ -11,38 +11,6 @@ from app.errors import INVALID_CLIENT_SECRET, AuthException, MISSING_PARAMS, Cus
     INVALID_AUTH_FORMAT, INVALID_AUTH_TYPE, INVALID_AUTH_TOKEN, AUTH_EXPIRED, CLIENT_DOES_NOT_EXIST
 
 
-class Auth(Resource):
-    def post(self):
-        params, missing = get_params('client_id', 'client_secret')
-
-        if missing:
-            raise AuthException(MISSING_PARAMS, missing)
-
-        client_id, client_secret = params
-        client_info_store = ClientInfo()
-
-        # If redis was just updated by hermes (ClientInfo().data is not None), check against the data from
-        # hermes' response instead of accessing redis again.
-        client = {}
-        if client_info_store.data:
-            for client_object in client_info_store.data:
-                if client_id == client_object['client_id']:
-                    client = client_object
-                    break
-        else:
-            client = client_info_store.get_client(client_id)
-
-        if client['secret'] != client_secret:
-            raise AuthException(INVALID_CLIENT_SECRET)
-
-        # if match, generate and return token/api key, else return error
-        response = jsonify({
-            'api_key': generate_jwt(client)
-        })
-
-        return make_response(response)
-
-
 def get_params(*params):
     values = []
     missing = []
@@ -104,3 +72,44 @@ def jwt_auth(f):
 
         return f(*args, **kwargs)
     return check_auth
+
+
+class Auth(Resource):
+    def post(self):
+        params, missing = get_params('client_id', 'client_secret')
+
+        if missing:
+            raise AuthException(MISSING_PARAMS, missing)
+
+        client_id, client_secret = params
+        client_info_store = ClientInfo()
+
+        # If redis was just updated by hermes (ClientInfo().data is not None), check against the data from
+        # hermes' response instead of accessing redis again.
+        client = {}
+        if client_info_store.data:
+            for client_object in client_info_store.data:
+                if client_id == client_object['client_id']:
+                    client = client_object
+                    break
+        else:
+            client = client_info_store.get_client(client_id)
+
+        if client['secret'] != client_secret:
+            raise AuthException(INVALID_CLIENT_SECRET)
+
+        # if match, generate and return token/api key, else return error
+        response = jsonify({
+            'api_key': generate_jwt(client)
+        })
+
+        return make_response(response)
+
+
+class Me(Resource):
+    @jwt_auth
+    def get(self):
+        return make_response(jsonify({'identity': g.client['organisation']}))
+
+
+

@@ -140,14 +140,3 @@ class TestClientAppInfo(TestCase):
         self.assertTrue(mock_request.called)
         self.assertFalse(mock_redis_set.called)
         self.assertEqual(e.exception.name, 'CONNECTION_ERROR')
-
-
-# class TestJwtAuth(TestCase):
-#     TESTING = True
-#
-#     def create_app(self):
-#         return create_app(self, )
-#
-#     def test_stuff(self):
-#
-#         self.assertEqual(1, 1)
