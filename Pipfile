@@ -13,6 +13,7 @@ requests = "*"
 flask-redis = "*"
 maya = "*"
 python-jose-cryptodome = "*"
+voluptuous = "*"
 
 [dev-packages]
 

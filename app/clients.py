@@ -3,9 +3,10 @@ import time
 
 import redis
 import requests
+import voluptuous
 
 import settings
-from app import redis_store
+from app import redis_store, schema
 from app.errors import CONNECTION_ERROR, CustomException, CLIENT_DOES_NOT_EXIST
 from settings import HERMES_URL, SERVICE_API_KEY
 
@@ -19,16 +20,18 @@ class ClientInfo:
 
     def update_client_apps(self):
         url = f'{HERMES_URL}/payment_cards/client_apps'
-
         try:
             resp = requests.get(url, headers={'Authorization': f'token {SERVICE_API_KEY}'})
-            data = resp.json()
 
-            # TODO: validate response. (format, correct keys etc.)
+            # Validate response data
+            data = resp.json()
+            schema.client_info_list(data)
 
             self._set_clients(data)
         except requests.RequestException as e:
             raise CustomException(CONNECTION_ERROR, message="Error retrieving client information.") from e
+        except voluptuous.error.Invalid as e:
+            raise CustomException(CONNECTION_ERROR) from e
 
         self._set_clients_last_saved()
         return data
