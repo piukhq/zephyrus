@@ -17,6 +17,7 @@ voluptuous = "*"
 [dev-packages]
 pytest = "*"
 flask-testing = "*"
+pytest-cov = "*"
 
 [requires]
 python_version = "3.6"
