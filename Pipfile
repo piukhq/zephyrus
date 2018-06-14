@@ -6,7 +6,6 @@ name = "pypi"
 [packages]
 flask = "*"
 flask-script = "*"
-pytest = "*"
 python-dotenv = "*"
 flask-restplus = "*"
 requests = "*"
@@ -16,6 +15,8 @@ python-jose-cryptodome = "*"
 voluptuous = "*"
 
 [dev-packages]
+pytest = "*"
+flask-testing = "*"
 
 [requires]
 python_version = "3.6"

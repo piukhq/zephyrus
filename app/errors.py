@@ -60,14 +60,6 @@ errors = {
 }
 
 
-def error_response(name, *format_args):
-    error = errors[name]
-    return jsonify({
-        'error': name,
-        'message': error['message'].format(*format_args)
-    }), error['code']
-
-
 class CustomException(Exception):
     """Exception raised for errors in the input.
     """

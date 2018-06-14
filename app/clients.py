@@ -60,8 +60,8 @@ class ClientInfo:
     def _set_clients(clients):
         """
         Stores client information for quick access with the client id.
-        :param clients: List of dicts e.g [{'client_id': '123sd', 'client_secret: '1qa1', 'organisation': 'Amex
-        '"""
+        :param clients: List of dicts e.g [{'client_id': '123sd', 'client_secret: '1qa1', 'organisation': 'Amex'}]
+        """
         for client in clients:
             ClientInfo._set(f"auth-transactions:{client['client_id']}", json.dumps(client))
         return True
