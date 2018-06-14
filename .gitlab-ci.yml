@@ -8,7 +8,7 @@ tests:
   script:
     - pip3 install pipenv
     - pipenv install --dev
-    - py.test app --cov=app
+    - pipenv run py.test app --cov=app
 
 complexity:
   stage: tests
