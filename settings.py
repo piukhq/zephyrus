@@ -13,3 +13,5 @@ SERVICE_API_KEY = os.getenv('SERVICE_API_KEY', 'F616CE5C88744DD52DB628FAD8B3D')
 REDIS_URL = os.getenv('ZEPHYRUS_REDIS_URL', 'redis://localhost:6379/8')
 
 CLIENT_INFO_STORAGE_TIMEOUT = 1/60    # Minimum number of minutes before redis cache can be updated by hermes
+
+SIGNATURE_SECRET = os.getenv('SIGNATURE_SECRET', '')

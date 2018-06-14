@@ -11,6 +11,8 @@ python-dotenv = "*"
 flask-restplus = "*"
 requests = "*"
 flask-redis = "*"
+maya = "*"
+python-jose-cryptodome = "*"
 
 [dev-packages]
 
