@@ -1,7 +1,7 @@
 import json
 from unittest import mock
 
-import jose
+import jose.jwt
 from flask_testing import TestCase
 
 import settings
