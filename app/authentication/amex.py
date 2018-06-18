@@ -112,6 +112,3 @@ class Me(Resource):
     @jwt_auth
     def get(self):
         return make_response(jsonify({'identity': g.client['organisation']}))
-
-
-
