@@ -17,7 +17,7 @@ def get_params(*params):
     for param in params:
         try:
             value = request.json[param]
-        except KeyError:
+        except (KeyError, TypeError):
             missing.append(param)
         else:
             values.append(value)
@@ -59,11 +59,10 @@ def jwt_auth(f):
                 key=settings.SIGNATURE_SECRET,
                 audience='https://api.bink.com',
                 issuer='bink')
-        except jose.exceptions.ExpiredSignatureError:
-            raise AuthException(AUTH_EXPIRED)
+        except jose.exceptions.ExpiredSignatureError as e:
+            raise AuthException(AUTH_EXPIRED) from e
         except jose.exceptions.JWTError as e:
-            print(repr(e))
-            raise AuthException(INVALID_AUTH_TOKEN)
+            raise AuthException(INVALID_AUTH_TOKEN) from e
 
         try:
             g.client = ClientInfo.get_client(claims['sub'])
@@ -92,6 +91,9 @@ class Auth(Resource):
                 if client_id == client_object['client_id']:
                     client = client_object
                     break
+
+            if not client:
+                raise AuthException(CLIENT_DOES_NOT_EXIST)
         else:
             client = client_info_store.get_client(client_id)
 
