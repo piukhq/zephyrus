@@ -9,12 +9,18 @@ INVALID_AUTH_FORMAT = 'INVALID_AUTH_FORMAT'
 INVALID_AUTH_TYPE = 'INVALID_AUTH_TYPE'
 INVALID_AUTH_TOKEN = 'INVALID_AUTH_TOKEN'
 AUTH_EXPIRED = 'AUTH_EXPIRED'
+INVALID_DATA_FORMAT = 'INVALID_DATA'
 
 
 errors = {
     MISSING_PARAMS: {
         'name': 'MISSING_PARAMS',
         'message': 'The following required parameters were missing from the request: {}',
+        'code': 400,
+    },
+    INVALID_DATA_FORMAT: {
+        'name': 'INVALID_DATA_FORMAT',
+        'message': '{}',
         'code': 400,
     },
     MISSING_AUTH: {
