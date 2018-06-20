@@ -1,10 +1,129 @@
-import xml.etree.ElementTree as ETree
+#import xml.etree.ElementTree as etree
+import io
+import lxml.etree as etree
+#from lxml import etree
+import hashlib
+import base64
+
+
+class BasicSoap:
+
+    def __init__(self, element):
+        self.tree = element
+
+    def remove(self, element_tag):
+        element = self.get_xml_element(element_tag)
+        parent = element.getparent()
+        parent.remove(element)
+
+    def get_xml_element_tree(self, element_tag):
+        return etree.ElementTree(self.get_xml_element(element_tag))
+
+    def get_xml_element(self, element_tag):
+        for element in self.tree.iter():
+            if element_tag in element.tag:
+                return element
+        return None
+
+    @staticmethod
+    def get_hash(input_text):
+        hash_object = hashlib.sha1(input_text)
+        b_str = str(base64.b64encode(hash_object.digest()), 'utf-8')
+        return b_str
+
+    @staticmethod
+    def canonicalize_xml(xml_part):
+        canonicalized_xml = io.BytesIO()
+        xml_part.write_c14n(canonicalized_xml, exclusive=True)
+        return canonicalized_xml
+
+
+class Signature(BasicSoap):
+
+    def __init__(self, element):
+        super().__init__(element)
+
+
+class UnsignedXML(BasicSoap):
+
+    def __init__(self, xml):
+        self.xml_doc = etree.fromstring(xml.encode('utf-8'))
+        super().__init__(etree.ElementTree(self.xml_doc))
+
+
+class SignedXML(BasicSoap):
+
+    def __init__(self, xml):
+        self.signature_value = None
+        self.digest_value = None
+        self.computed_digest_value = None
+        self.X509_value = None
+        self.xml_doc = etree.fromstring(xml.encode('utf-8'))
+        super().__init__(etree.ElementTree(self.xml_doc))
+
+    def process_signed_envelope(self):
+        signature = Signature(self.get_xml_element_tree("Signature"))
+
+        # Remove signature section as envelope method signs the rest of the document
+        self.remove("Signature")
+        # Canonicalize the document to be hashed
+        f2 = self.canonicalize_xml(self.tree)
+
+        self.computed_digest_value = self.get_hash(f2.getvalue())
+        print(self.computed_digest_value)
+
+        signature_value_element = signature.get_xml_element('SignatureValue')
+        self.signature_value = signature_value_element.text
+        print(self.signature_value)
+
+        digest_value_element = signature.get_xml_element('DigestValue')
+        self.digest_value = digest_value_element.text
+        print(self.digest_value)
+
+        X509_value_element = signature.get_xml_element('X509Certificate')
+        self.X509_value = X509_value_element.text
+        print(self.X509_value)
+
+        print(base64.b64decode(self.X509_value))
+
+        #signature_value = self.canonicalize_xml(signature_value)
+        #signature_value_str = signature_value.getvalue().decode("utf-8")
+
+
+
+
+        """
+        bst_hash = self.digest_section(tree, 'BinarySecurityToken')
+        xml = xml.replace('digest_1', bst_hash)
+
+        time_stamp_hash = self.digest_section(tree, 'Timestamp')
+        xml = xml.replace('digest_2', time_stamp_hash)
+
+        identity_hash = self.digest_section(tree, 'identity')
+        xml = xml.replace('digest_3', identity_hash)
+
+        body_hash = self.digest_section(tree, 'Body')
+        xml = xml.replace('digest_4', body_hash)
+       
+        # Now get the completed SignedInfo element and add it to the SignatureValue section
+        xml_doc1 = etree.fromstring(xml.encode('utf-8'))
+        tree1 = etree.ElementTree(xml_doc1)
+        signed_info = self.get_xml_element(tree1, 'SignedInfo')
+        signed_info = self.canonicalize_xml(signed_info)
+        signed_info_str = signed_info.getvalue().decode("utf-8")  # etree.tostring(signed_info)
+        signature_value = '{{#base64}}{{#rsa_sign}}sha512,' + signed_info_str + '{{/rsa_sign}}{{/base64}}'
+        xml = xml.replace('signature_value', signature_value)
+        print(signature_value)
+        return xml
+        """
+
 
 
 def mastercard_request(xml_data):
     try:
         mc_data = {}
-        xml_doc = ETree.fromstring(xml_data)
+
+        xml_doc = etree.fromstring(xml_data.encode('utf8'))
         # need ('time', 'amount', 'mid', 'third_party_id', 'auth_code', 'currency_code', 'payment_card_token')
         # get client by client id gets ('client_id', 'secret', 'organisation') may not be useful
 
@@ -30,7 +149,9 @@ def mastercard_request(xml_data):
 
         return mc_data, True, None
 
-    except ETree.ParseError as e:
+    except etree.ParseError as e:
         return mc_data, False, f'XML Parse Error: {e}'
     except (TypeError, IndexError, KeyError, AttributeError) as e:
         return mc_data, False, f'Error {e}'
+
+

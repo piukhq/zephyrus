@@ -11,6 +11,7 @@ python-dotenv = "*"
 flask-restplus = "*"
 requests = "*"
 flask-redis = "*"
+lxml = "*"
 
 [dev-packages]
 flask-testing = "*"
