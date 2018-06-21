@@ -4,12 +4,21 @@ import lxml.etree as etree
 #from lxml import etree
 import hashlib
 import base64
+from signxml import VerifyResult, XMLVerifier
 
 
 class BasicSoap:
 
-    def __init__(self, element):
-        self.tree = element
+    def __init__(self, xml=None, element=None):
+        self.xml = None
+        self.xml_doc = None
+        self.tree = None
+        if xml:
+            self.xml = xml.encode('utf-8')
+            if not element:
+                element = etree.ElementTree(etree.fromstring(self.xml))
+        if element:
+            self.tree = element
 
     def remove(self, element_tag):
         element = self.get_xml_element(element_tag)
@@ -41,33 +50,62 @@ class BasicSoap:
 class Signature(BasicSoap):
 
     def __init__(self, element):
-        super().__init__(element)
+        super().__init__(element=element)
 
 
 class UnsignedXML(BasicSoap):
 
     def __init__(self, xml):
-        self.xml_doc = etree.fromstring(xml.encode('utf-8'))
-        super().__init__(etree.ElementTree(self.xml_doc))
+        super().__init__(xml=xml)
 
 
 class SignedXML(BasicSoap):
 
-    def __init__(self, xml):
+    def __init__(self, xml, root_cert=None):
+        self.root_cert = root_cert
         self.signature_value = None
         self.digest_value = None
         self.computed_digest_value = None
         self.X509_value = None
-        self.xml_doc = etree.fromstring(xml.encode('utf-8'))
-        super().__init__(etree.ElementTree(self.xml_doc))
+        super().__init__(xml=xml)
+
+
+    def sign(self):
+        pass
+
+    def verify_signature(self):
+        """
+        Uses signxml to verify signature and return only verified data checked by
+        signature.  Much safer to use as it contains security measures against XML
+        attacks.  Also supports other methods.
+        A root certificate must be supplied to verify the X509 certificate in the
+        XML signature - this is an in built security measure.
+        However, requires more dev ops support to install system libraries etc.
+
+        :return:
+        """
+
+        assertion_data = XMLVerifier().verify(self.xml, x509_cert=self.root_cert).signed_xml
+        print (assertion_data)
+        return assertion_data
 
     def process_signed_envelope(self):
+        """
+        Manual method not using signxml and assuming envelope, sha1, and c14n
+        Requires XML security measures to be added
+
+        Note built in xml.etree can be used but exclusive is not supported
+
+        :return:
+        """
         signature = Signature(self.get_xml_element_tree("Signature"))
 
         # Remove signature section as envelope method signs the rest of the document
         self.remove("Signature")
         # Canonicalize the document to be hashed
         f2 = self.canonicalize_xml(self.tree)
+
+        print(f2.getvalue())
 
         self.computed_digest_value = self.get_hash(f2.getvalue())
         print(self.computed_digest_value)
@@ -88,35 +126,6 @@ class SignedXML(BasicSoap):
 
         #signature_value = self.canonicalize_xml(signature_value)
         #signature_value_str = signature_value.getvalue().decode("utf-8")
-
-
-
-
-        """
-        bst_hash = self.digest_section(tree, 'BinarySecurityToken')
-        xml = xml.replace('digest_1', bst_hash)
-
-        time_stamp_hash = self.digest_section(tree, 'Timestamp')
-        xml = xml.replace('digest_2', time_stamp_hash)
-
-        identity_hash = self.digest_section(tree, 'identity')
-        xml = xml.replace('digest_3', identity_hash)
-
-        body_hash = self.digest_section(tree, 'Body')
-        xml = xml.replace('digest_4', body_hash)
-       
-        # Now get the completed SignedInfo element and add it to the SignatureValue section
-        xml_doc1 = etree.fromstring(xml.encode('utf-8'))
-        tree1 = etree.ElementTree(xml_doc1)
-        signed_info = self.get_xml_element(tree1, 'SignedInfo')
-        signed_info = self.canonicalize_xml(signed_info)
-        signed_info_str = signed_info.getvalue().decode("utf-8")  # etree.tostring(signed_info)
-        signature_value = '{{#base64}}{{#rsa_sign}}sha512,' + signed_info_str + '{{/rsa_sign}}{{/base64}}'
-        xml = xml.replace('signature_value', signature_value)
-        print(signature_value)
-        return xml
-        """
-
 
 
 def mastercard_request(xml_data):

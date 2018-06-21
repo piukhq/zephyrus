@@ -12,6 +12,7 @@ flask-restplus = "*"
 requests = "*"
 flask-redis = "*"
 lxml = "*"
+signxml = "*"
 
 [dev-packages]
 flask-testing = "*"

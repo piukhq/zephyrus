@@ -2,6 +2,54 @@ from app import create_app
 from flask_testing import TestCase
 from app.mastercard.process_soap_request import mastercard_request
 from app.mastercard.process_soap_request import SignedXML, UnsignedXML
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography import x509
+from cryptography.x509.oid import NameOID
+from cryptography.hazmat.primitives import hashes
+import datetime
+
+class Certificate:
+
+    def __init__(self):
+        self.private_key = self.make_private_key()
+        self.private_key_pem = self.make_private_pem()
+        self.root_cert = self.make_certificate()
+
+    def make_private_key(self):
+        return rsa.generate_private_key( public_exponent = 65537, key_size = 2048, backend = default_backend())
+
+    def make_private_pem(self):
+        return self.private_key.private_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PrivateFormat.TraditionalOpenSSL,
+            encryption_algorithm=serialization.BestAvailableEncryption(b"passphrase"),
+        )
+
+    def make_certificate(self):
+        # Various details about who we are. For a self-signed certificate the
+        # subject and issuer are always the same.
+
+        subject = issuer = x509.Name([
+            x509.NameAttribute(NameOID.COUNTRY_NAME, u"US"),
+            x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, u"CA"),
+            x509.NameAttribute(NameOID.LOCALITY_NAME, u"San Francisco"),
+            x509.NameAttribute(NameOID.ORGANIZATION_NAME, u"My Company"),
+            x509.NameAttribute(NameOID.COMMON_NAME, u"mysite.com"),
+        ])
+
+        cert = x509.CertificateBuilder()\
+            .subject_name(subject)\
+            .issuer_name(issuer)\
+            .public_key(self.private_key.public_key())\
+            .serial_number(x509.random_serial_number())\
+            .not_valid_before(datetime.datetime.utcnow())\
+            .not_valid_after(datetime.datetime.utcnow() + datetime.timedelta(days=2))\
+            .add_extension(x509.SubjectAlternativeName([x509.DNSName(u"localhost")]), critical=False,)\
+            .sign(self.private_key, hashes.SHA256(), default_backend())
+
+        return cert.public_bytes(serialization.Encoding.PEM)
 
 
 class MockMastercardAuthTransaction:
@@ -33,7 +81,7 @@ class MockMastercardAuthTransaction:
             "QQKExRNYXN0ZXJDYXJkIFdvcmxkd2lkZTEdMBsGA1UECxMUY2l0aXplbnMtb25saW5lLW1hbGwxKjAoBgNVBAMTIXN" \
             "0bG1yc2pzZWN0MS5jb3JwLm1hc3RlcmNhcmQudGVzdDCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEAtM6O3e" \
             "r9A2BRLxT9l3CPqqGv4jAe35K8pA2NxX7qSqwLiszaDiC5GV5GzvJ0/stlr6pM6CRR1gLIyVEyQjL1kA+qBFQ1YO" \
-            "I8AzypxeSxiAyW5DZ3rt4+qOIzJxTOOyAqUw80Hfuqk+J0NdchXZkAaMU5Sx9T6inL ElrzCbNQMUUCAwEAAaOCAb" \
+            "I8AzypxeSxiAyW5DZ3rt4+qOIzJxTOOyAqUw80Hfuqk+J0NdchXZkAaMU5Sx9T6inLElrzCbNQMUUCAwEAAaOCAb" \
             "IwggGuMB8GA1UdIwQYMBaAFNVf0euD27u/RRw+3HIysV/aF4rDMAkGA1UdEwQCMAAwggERBgNVHSAEggEIMIIBBD" \
             "CCAQAGCSqGSIb3DQUGATCB8jAzBggrBgEFBQcCARYnaHR0cDovL2NlcnRpZmljYXRlcy5tYXN0ZXJjYXJkLmNvbS9" \
             "DUFMvMIG6BggrBgEFBQcCAjCBrTAbFhRNYXN0ZXJDYXJkIFdvcmxkd2lkZTADAgEBGoGNVGhlIE1hc3RlckNhcmQg" \
@@ -63,24 +111,25 @@ class MockMastercardAuthTransaction:
     @property
     def xml(self):
         return f"""<?xml version="1.0" encoding="UTF-8"?>
-    <Transaction xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-        <refNum>{self.ref_num}</refNum>
-        <timestamp>{self.timestamp}</timestamp>
-        <bankCustNum>{self.bank_cust_num}</bankCustNum>
-        <transId>{self.trans_id}</transId>
-        <transAmt>{self.trans_amt}</transAmt>
-        <merchId>{self.merch_id}</merchId>
-        <merchNameLoc>{self.merch_name_loc}</merchNameLoc>
-        <transDate>{self.trans_date}</transDate>
-        <transTime>{self.trans_time}</transTime>
-        <merchCatCd>{self.merch_cat_cd}</merchCatCd>
-        <acquirerIca>{self.acquirer_ica}</acquirerIca>
-        <de48se26sf1WltId>{self.wlt_id}</de48se26sf1WltId>
-        <de48se33sf6TokenRqstrId>{self.token_rqstr_id}</de48se33sf6TokenRqstrId>
-        <retCd>{self.ret_cd}</retCd>
-        {self.signature}</Transaction>"""
+<Transaction xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<refNum>{self.ref_num}</refNum>
+<timestamp>{self.timestamp}</timestamp>
+<bankCustNum>{self.bank_cust_num}</bankCustNum>
+<transId>{self.trans_id}</transId>
+<transAmt>{self.trans_amt}</transAmt>
+<merchId>{self.merch_id}</merchId>
+<merchNameLoc>{self.merch_name_loc}</merchNameLoc>
+<transDate>{self.trans_date}</transDate>
+<transTime>{self.trans_time}</transTime>
+<merchCatCd>{self.merch_cat_cd}</merchCatCd>
+<acquirerIca>{self.acquirer_ica}</acquirerIca>
+<de48se26sf1WltId>{self.wlt_id}</de48se26sf1WltId>
+<de48se33sf6TokenRqstrId>{self.token_rqstr_id}</de48se33sf6TokenRqstrId>
+<retCd>{self.ret_cd}</retCd>
+{self.signature}</Transaction>"""
 
     def get_signature(self):
+
         return f"""<ds:Signature xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
             <ds:SignedInfo>
                 <ds:CanonicalizationMethod Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/>
@@ -181,9 +230,10 @@ class MasterCardAuthTestCases(TestCase):
         resp = self.client.post('/mastercard', data=trans.signed_xml, content_type="text/xml")
         self.assert200(resp)
 
-    def test_xml_signed(self):
+    def test_xml_signed1(self):
         trans = MockMastercardAuthTransaction()
         signed_xml = SignedXML(trans.signed_xml)
+        #signed_xml.verify_signature()
         signed_xml.process_signed_envelope()
 
         trans2 = MockMastercardAuthTransaction()
@@ -192,3 +242,12 @@ class MasterCardAuthTestCases(TestCase):
         print(unsigned_xml.get_hash(f2.getvalue()))
         print(f2.getvalue())
 
+    def test_xml_signed(self):
+        trans = MockMastercardAuthTransaction()
+        signed_xml = SignedXML(trans.signed_xml)
+        signed_xml.verify_signature()
+
+    def test_certificate(self):
+        cert = Certificate()
+        print(cert.private_key_pem)
+        print(cert.root_cert)
