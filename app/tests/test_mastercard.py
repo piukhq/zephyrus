@@ -1,33 +1,160 @@
 from app import create_app
 from flask_testing import TestCase
 from app.mastercard.process_soap_request import mastercard_request
-from app.mastercard.process_soap_request import SignedXML, UnsignedXML
+from app.mastercard.process_soap_request import get_valid_signed_data
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography import x509
 from cryptography.x509.oid import NameOID
 from cryptography.hazmat.primitives import hashes
+from signxml import XMLVerifier, XMLSigner, methods as sign_methods
+import lxml.etree as etree
+import hashlib
+import base64
 import datetime
+
+
+class BasicSoap:
+
+    def __init__(self, xml=None, element=None):
+        self.xml = None
+        self.xml_doc = None
+        self.tree = None
+        if xml:
+            self.xml = xml.encode('utf-8')
+            if not element:
+                element = etree.ElementTree(etree.fromstring(self.xml))
+        if element:
+            self.tree = element
+
+    def remove(self, element_tag):
+        element = self.get_xml_element(element_tag)
+        parent = element.getparent()
+        parent.remove(element)
+
+    def get_xml_element_tree(self, element_tag):
+        return etree.ElementTree(self.get_xml_element(element_tag))
+
+    def get_xml_element(self, element_tag):
+        for element in self.tree.iter():
+            if element_tag in element.tag:
+                return element
+        return None
+
+    @staticmethod
+    def get_hash(input_text):
+        hash_object = hashlib.sha1(input_text)
+        b_str = str(base64.b64encode(hash_object.digest()), 'utf-8')
+        return b_str
+
+    @staticmethod
+    def canonicalize_xml(xml_part):
+        canonicalized_xml = io.BytesIO()
+        xml_part.write_c14n(canonicalized_xml, exclusive=True)
+        return canonicalized_xml
+
+
+class Signature(BasicSoap):
+
+    def __init__(self, element):
+        super().__init__(element=element)
+
+
+class UnsignedXML(BasicSoap):
+
+    def __init__(self, xml):
+        super().__init__(xml=xml)
+
+
+class SignedXML(BasicSoap):
+
+    def __init__(self, xml, root_cert=None):
+        self.root_cert = root_cert
+        self.signature_value = None
+        self.digest_value = None
+        self.computed_digest_value = None
+        self.X509_value = None
+        super().__init__(xml=xml)
+
+
+    def sign(self):
+        pass
+
+    def verify_signature(self, root_cert):
+        """
+        Uses signxml to verify signature and return only verified data checked by
+        signature.  Much safer to use as it contains security measures against XML
+        attacks.  Also supports other methods.
+        A root certificate must be supplied to verify the X509 certificate in the
+        XML signature - this is an in built security measure.
+        However, requires more dev ops support to install system libraries etc.
+
+        :return:
+        """
+
+        assertion_data = XMLVerifier().verify(self.xml, x509_cert=root_cert).signed_xml
+        print (assertion_data)
+        return assertion_data
+
+    def process_signed_envelope(self):
+        """
+        Manual method not using signxml and assuming envelope, sha1, and c14n
+        Requires XML security measures to be added
+
+        Note built in xml.etree can be used but exclusive is not supported
+
+        :return:
+        """
+        signature = Signature(self.get_xml_element_tree("Signature"))
+
+        # Remove signature section as envelope method signs the rest of the document
+        self.remove("Signature")
+        # Canonicalize the document to be hashed
+        f2 = self.canonicalize_xml(self.tree)
+
+        print(f2.getvalue())
+
+        self.computed_digest_value = self.get_hash(f2.getvalue())
+        print(self.computed_digest_value)
+
+        signature_value_element = signature.get_xml_element('SignatureValue')
+        self.signature_value = signature_value_element.text
+        print(self.signature_value)
+
+        digest_value_element = signature.get_xml_element('DigestValue')
+        self.digest_value = digest_value_element.text
+        print(self.digest_value)
+
+        X509_value_element = signature.get_xml_element('X509Certificate')
+        self.X509_value = X509_value_element.text
+        print(self.X509_value)
+
+        print(base64.b64decode(self.X509_value))
+
+        #signature_value = self.canonicalize_xml(signature_value)
+        #signature_value_str = signature_value.getvalue().decode("utf-8")
+
 
 class Certificate:
 
     def __init__(self):
         self.private_key = self.make_private_key()
-        self.private_key_pem = self.make_private_pem()
-        self.root_cert = self.make_certificate()
+        self.root_cert = self.make_root_certificate()
 
-    def make_private_key(self):
-        return rsa.generate_private_key( public_exponent = 65537, key_size = 2048, backend = default_backend())
+    @staticmethod
+    def make_private_key():
+        return rsa.generate_private_key(public_exponent=65537, key_size=2048, backend=default_backend())
 
-    def make_private_pem(self):
+    @property
+    def private_pem_key(self):
         return self.private_key.private_bytes(
             encoding=serialization.Encoding.PEM,
             format=serialization.PrivateFormat.TraditionalOpenSSL,
             encryption_algorithm=serialization.BestAvailableEncryption(b"passphrase"),
         )
 
-    def make_certificate(self):
+    def make_root_certificate(self):
         # Various details about who we are. For a self-signed certificate the
         # subject and issuer are always the same.
 
@@ -39,7 +166,7 @@ class Certificate:
             x509.NameAttribute(NameOID.COMMON_NAME, u"mysite.com"),
         ])
 
-        cert = x509.CertificateBuilder()\
+        return x509.CertificateBuilder()\
             .subject_name(subject)\
             .issuer_name(issuer)\
             .public_key(self.private_key.public_key())\
@@ -49,7 +176,16 @@ class Certificate:
             .add_extension(x509.SubjectAlternativeName([x509.DNSName(u"localhost")]), critical=False,)\
             .sign(self.private_key, hashes.SHA256(), default_backend())
 
-        return cert.public_bytes(serialization.Encoding.PEM)
+    @property
+    def root_pem_certificate(self):
+        return self.root_cert.public_bytes(serialization.Encoding.PEM)
+
+    def sign(self, xml):
+        return XMLSigner(method=sign_methods.enveloped,
+                         signature_algorithm="rsa-sha1",
+                         digest_algorithm='sha1',
+                         c14n_algorithm=u'http://www.w3.org/2001/10/xml-exc-c14n#')\
+            .sign(xml, key=self.private_key,  cert=self.root_pem_certificate)
 
 
 class MockMastercardAuthTransaction:
@@ -162,6 +298,9 @@ class MockMastercardAuthTransaction:
         self.signature = self.get_signature()
         return self.xml
 
+    @property
+    def xml_root(self):
+        return etree.ElementTree(etree.fromstring(self.xml.encode('utf-8')))
 
 class MasterCardAuthTestCases(TestCase):
 
@@ -179,7 +318,7 @@ class MasterCardAuthTestCases(TestCase):
 
     def test_xml_request(self):
         trans = MockMastercardAuthTransaction()
-        mc_data, success, message = mastercard_request(trans.signed_xml)
+        return_xml, mc_data, success, message = mastercard_request(trans.signed_xml)
         self.assertEquals(message, None)
         self.assertTrue(success)
         expected = {
@@ -249,5 +388,10 @@ class MasterCardAuthTestCases(TestCase):
 
     def test_certificate(self):
         cert = Certificate()
-        print(cert.private_key_pem)
+        print(cert.private_pem_key)
         print(cert.root_cert)
+        trans = MockMastercardAuthTransaction()
+        root_generated_signed_xml = cert.sign(trans.xml_root)
+        generated_signed_xml = etree.tostring(root_generated_signed_xml)
+        print(generated_signed_xml.decode('utf8'))
+        get_valid_signed_data(generated_signed_xml, cert.root_pem_certificate)
