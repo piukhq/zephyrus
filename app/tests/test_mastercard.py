@@ -1,7 +1,7 @@
 from app import create_app
 from flask_testing import TestCase
-from app.mastercard.process_soap_request import mastercard_request
-from app.mastercard.process_soap_request import get_valid_signed_data
+from app.mastercard.process_xml_request import mastercard_request
+from app.mastercard.process_xml_request import get_valid_signed_data
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
@@ -13,7 +13,7 @@ import lxml.etree as etree
 import hashlib
 import base64
 import datetime
-
+import io
 
 class BasicSoap:
 
@@ -81,7 +81,7 @@ class SignedXML(BasicSoap):
     def sign(self):
         pass
 
-    def verify_signature(self, root_cert):
+    def verify_signature(self, root_cert, cert_subject_name):
         """
         Uses signxml to verify signature and return only verified data checked by
         signature.  Much safer to use as it contains security measures against XML
@@ -93,7 +93,8 @@ class SignedXML(BasicSoap):
         :return:
         """
 
-        assertion_data = XMLVerifier().verify(self.xml, x509_cert=root_cert).signed_xml
+        assertion_data = XMLVerifier().verify(self.xml, x509_cert=root_cert, cert_subject_name=cert_subject_name)\
+            .signed_xml
         print (assertion_data)
         return assertion_data
 
@@ -139,8 +140,19 @@ class SignedXML(BasicSoap):
 class Certificate:
 
     def __init__(self):
+        self.common_name = "mysite.com"
+        self.cert_subject = self.issuer = x509.Name([
+            x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
+            x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "CA"),
+            x509.NameAttribute(NameOID.LOCALITY_NAME, "San Francisco"),
+            x509.NameAttribute(NameOID.ORGANIZATION_NAME, "My Company"),
+            x509.NameAttribute(NameOID.COMMON_NAME, self.common_name),
+        ])
+
         self.private_key = self.make_private_key()
+        self.public_key = self.private_key.public_key()
         self.root_cert = self.make_root_certificate()
+
 
     @staticmethod
     def make_private_key():
@@ -157,19 +169,10 @@ class Certificate:
     def make_root_certificate(self):
         # Various details about who we are. For a self-signed certificate the
         # subject and issuer are always the same.
-
-        subject = issuer = x509.Name([
-            x509.NameAttribute(NameOID.COUNTRY_NAME, u"US"),
-            x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, u"CA"),
-            x509.NameAttribute(NameOID.LOCALITY_NAME, u"San Francisco"),
-            x509.NameAttribute(NameOID.ORGANIZATION_NAME, u"My Company"),
-            x509.NameAttribute(NameOID.COMMON_NAME, u"mysite.com"),
-        ])
-
         return x509.CertificateBuilder()\
-            .subject_name(subject)\
-            .issuer_name(issuer)\
-            .public_key(self.private_key.public_key())\
+            .subject_name(self.cert_subject)\
+            .issuer_name(self.issuer)\
+            .public_key(self.public_key)\
             .serial_number(x509.random_serial_number())\
             .not_valid_before(datetime.datetime.utcnow())\
             .not_valid_after(datetime.datetime.utcnow() + datetime.timedelta(days=2))\
@@ -232,14 +235,27 @@ class MockMastercardAuthTransaction:
 
         self.signature = ""
 
-        args_list = [
+        self.args_list = [
             'ref_num','timestamp', 'bank_cust_num','trans_id', "trans_amt", "merch_id", "merch_name_loc", "trans_date",
             "trans_time", "merch_cat_cd", "acquirer_ica","wlt_id", "token_rqstr_id", "ret_cd", "digest",
             "signature_value", "x509_cert"
         ]
-
+        """
+        self.tags_list = [refNum, timestamp, bankCustNum, transId,
+        transAmt0
+        .45
+        merchId88888888
+        merchNameLocBest  # 456 Hollywood, FL
+        transDate12312010
+        transTime154539
+        merchCatCd5542
+        acquirerIca7246
+        de48se26sf1WltId103
+        de48se33sf6TokenRqstrId50110030273
+        retCd0
+        """
         for v in range(0, len(args)):
-            setattr(self, args_list[v], args[v])
+            setattr(self, self.args_list[v], args[v])
 
         for k, v in kwargs.items():
             setattr(self, k, v)
@@ -302,6 +318,7 @@ class MockMastercardAuthTransaction:
     def xml_root(self):
         return etree.ElementTree(etree.fromstring(self.xml.encode('utf-8')))
 
+
 class MasterCardAuthTestCases(TestCase):
 
     TESTING = True
@@ -349,7 +366,7 @@ class MasterCardAuthTestCases(TestCase):
             ret_cd="0",
             digest="oh5jTf3ufNbKvfE8WzsssHce95E=",
         )
-        mc_data, success, message = mastercard_request(trans.signed_xml)
+        xml, mc_data, success, message = mastercard_request(trans.signed_xml)
         self.assertEquals(message, None)
         self.assertTrue(success)
         expected = {
@@ -368,6 +385,7 @@ class MasterCardAuthTestCases(TestCase):
         trans = MockMastercardAuthTransaction()
         resp = self.client.post('/mastercard', data=trans.signed_xml, content_type="text/xml")
         self.assert200(resp)
+        print(resp.data.decode('utf8'))
 
     def test_xml_signed1(self):
         trans = MockMastercardAuthTransaction()
@@ -381,17 +399,48 @@ class MasterCardAuthTestCases(TestCase):
         print(unsigned_xml.get_hash(f2.getvalue()))
         print(f2.getvalue())
 
-    def test_xml_signed(self):
+    def cannot_do_without_info_test_xml_signed_(self):
+        root_cert = None
+        common_name = None
         trans = MockMastercardAuthTransaction()
-        signed_xml = SignedXML(trans.signed_xml)
-        signed_xml.verify_signature()
+        signed_xml = SignedXML(trans.xml)
+
+        signed_xml.verify_signature(root_cert, common_name)
 
     def test_certificate(self):
         cert = Certificate()
         print(cert.private_pem_key)
         print(cert.root_cert)
-        trans = MockMastercardAuthTransaction()
+        trans = MockMastercardAuthTransaction(
+            "XXÿ", "2018-04-07T17:51:01.0000700-00:00", "999456789012345",
+            trans_id="11111",
+            trans_amt="0.45",
+            merch_id="88888888",
+            merch_name_loc="Best #456 Hollywood, FL",
+            trans_date="12312010",
+            trans_time="154539",
+            merch_cat_cd="5542",
+            acquirer_ica="7246",
+            wlt_id="103",
+            token_rqstr_id="50110030273",
+            ret_cd="0",
+            digest="oh5jTf3ufNbKvfE8WzsssHce95E=",
+        )
+        print("input trans:")
+        print(etree.tostring(trans.xml_root).decode('utf8'))
         root_generated_signed_xml = cert.sign(trans.xml_root)
         generated_signed_xml = etree.tostring(root_generated_signed_xml)
+        print("signed trans:")
         print(generated_signed_xml.decode('utf8'))
-        get_valid_signed_data(generated_signed_xml, cert.root_pem_certificate)
+        valid_data = get_valid_signed_data(generated_signed_xml, cert.root_pem_certificate, cert.common_name)
+        print("valid data")
+        print(etree.tostring(valid_data))
+        count = 0
+        for element in valid_data.iter():
+            print(f"{element.tag}{element.text}")
+
+            if element.tag.lower() in trans.args_list:
+                count += 1
+                print(element.tag)
+                self.assertEqual(getattr(trans, element.tag), element.text)
+        print(count)

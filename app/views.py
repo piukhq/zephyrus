@@ -4,7 +4,7 @@ from flask_restplus import Resource
 from app.clients import ClientInfo
 from app.errors import CLIENT_SECRET_DOES_NOT_MATCH, CustomException
 
-from .mastercard.process_soap_request import mastercard_request
+from .mastercard.process_xml_request import mastercard_request
 
 
 class Auth(Resource):
@@ -31,15 +31,14 @@ class Amex(Resource):
 class MasterCard(Resource):
 
     def post(self):
-
         """
 
         :return:
         """
 
         xml_data = request.data.decode("utf-8")
-        mc_data, success, message = mastercard_request(xml_data)
+        xml, mc_data, success, message = mastercard_request(xml_data)
         if success:
-            return {'success': True}, 200
+            return xml, 200
         else:
-            return {'success': False, 'message': message}, 400
+            return xml, 400
