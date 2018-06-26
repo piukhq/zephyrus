@@ -1,6 +1,31 @@
-import lxml.etree as etree
 from settings import MASTERCARD_TRANSACTION_SIGNING_CERTIFICATE, MASTERCARD_CERTIFICATE_COMMON_NAME
 from signxml import XMLVerifier, InvalidCertificate, InvalidSignature, InvalidDigest, InvalidInput
+from flask import request
+from app.errors import CustomException
+import lxml.etree as etree
+
+
+def mastercard_signed_xml(func):
+    """Decorator to map request to standard pattern inserting data into response data
+    and replying in standard error format for mastercard
+
+    :param func:
+    :return:
+    """
+
+    def wrapper(*args, **kwargs):
+        print("enter")
+        xml_data = request.data.decode("utf-8")
+        xml, mc_data, message, code = mastercard_request(xml_data)
+        request.data = mc_data
+        try:
+            ret = func(*args, **kwargs)
+            print(ret)
+        except CustomException:
+            code = 400
+        return xml, code
+
+    return wrapper
 
 
 def get_xml_element(element_tree, element_tag):

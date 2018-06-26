@@ -483,7 +483,6 @@ class MasterCardAuthTestCases(TestCase):
         self.assertEquals(code, 404)
         self.assertEqual(mc_data, {})
 
-
     def test_get_valid_signed_data_elements(self):
         """ Tests a certificate can be produced, a transaction signed and verified by signXML
         This tests the get_valid_signed_data function in process_xml_request will
@@ -515,6 +514,10 @@ class MasterCardAuthTestCases(TestCase):
         print(generated_signed_xml.decode('utf8'))
         valid_data_elements = get_valid_signed_data_elements(generated_signed_xml,
                                                              cert.root_pem_certificate, cert.common_name)
+
+        cert_raw = cert.root_pem_certificate.decode('utf8')
+        print(base64.b64decode(cert_raw))
+
         count = 0
         for element in valid_data_elements:
             print(f"{element.tag}{element.text}")

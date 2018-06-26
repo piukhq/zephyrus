@@ -2,8 +2,7 @@ from flask import request, jsonify, make_response
 from flask_restplus import Resource
 from app.clients import ClientInfo
 from app.errors import CLIENT_SECRET_DOES_NOT_MATCH, CustomException
-
-from .mastercard.process_xml_request import mastercard_request
+from .mastercard.process_xml_request import mastercard_signed_xml
 
 
 class Auth(Resource):
@@ -29,15 +28,15 @@ class Amex(Resource):
 
 class MasterCard(Resource):
 
+    @mastercard_signed_xml
     def post(self):
-        """
-
-        :return:
-        """
-
-        xml_data = request.data.decode("utf-8")
-        xml, mc_data, message, code = mastercard_request(xml_data)
-        if code == 200:
-            return xml, 200
-        else:
-            return xml, code
+        data = request.data
+        print(data)
+        # todo: Commment out when merged with Development
+        #try:
+        #    schema.mastercard_auth_transaction(data)
+        #except voluptuous.error.Invalid as e:
+        #    raise CustomException(INVALID_DATA_FORMAT, e) from e
+        #transaction = format_data(data)
+        #save_transaction(transaction)
+        return {'success': True}
