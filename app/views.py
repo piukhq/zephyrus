@@ -1,6 +1,5 @@
 from flask import request, jsonify, make_response
 from flask_restplus import Resource
-
 from app.clients import ClientInfo
 from app.errors import CLIENT_SECRET_DOES_NOT_MATCH, CustomException
 
@@ -37,8 +36,8 @@ class MasterCard(Resource):
         """
 
         xml_data = request.data.decode("utf-8")
-        xml, mc_data, success, message = mastercard_request(xml_data)
-        if success:
+        xml, mc_data, message, code = mastercard_request(xml_data)
+        if code == 200:
             return xml, 200
         else:
-            return xml, 400
+            return xml, code

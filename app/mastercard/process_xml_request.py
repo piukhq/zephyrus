@@ -1,5 +1,6 @@
 import lxml.etree as etree
-from signxml import XMLVerifier
+from settings import MASTERCARD_TRANSACTION_SIGNING_CERTIFICATE, MASTERCARD_CERTIFICATE_COMMON_NAME
+from signxml import XMLVerifier, InvalidCertificate, InvalidSignature, InvalidDigest, InvalidInput
 
 
 def get_xml_element(element_tree, element_tag):
@@ -20,20 +21,27 @@ def remove_xml_element_tree(element_tree, element_tag):
         return element_tree
 
 
-def get_valid_signed_data(binary_xml, root_cert, cert_subject_name):
-    assertion_data = XMLVerifier().verify(binary_xml, x509_cert=root_cert, cert_subject_name=cert_subject_name)\
-        .signed_xml
-    return assertion_data
+def get_valid_signed_data_elements(binary_xml, root_cert, cert_subject_name):
+    assertion_data_elements = XMLVerifier().verify(binary_xml,
+                                                   x509_cert=root_cert,
+                                                   cert_subject_name=cert_subject_name).signed_xml
+    return assertion_data_elements
+
+
+def get_certificate_details():
+    return MASTERCARD_TRANSACTION_SIGNING_CERTIFICATE, MASTERCARD_CERTIFICATE_COMMON_NAME
 
 
 def mastercard_request(xml_data):
+    mc_data = {}
+    signing_certificate_chain, certificate_common_name = get_certificate_details()
     try:
         binary_xml = xml_data.encode('utf-8')
         xml_doc = etree.fromstring(binary_xml)
-        element_tree = etree.ElementTree(xml_doc)
+        xml_tree_root = etree.ElementTree(xml_doc)
 
-        mc_data = {}
-        xml_doc = etree.fromstring(binary_xml)
+
+
         # need ('time', 'amount', 'mid', 'third_party_id', 'auth_code', 'currency_code', 'payment_card_token')
         # get client by client id gets ('client_id', 'secret', 'organisation') may not be useful
 
@@ -46,7 +54,14 @@ def mastercard_request(xml_data):
             'transTime': 'time'
         }
 
-        mc_data = {conversion_map[child.tag]: child.text for child in xml_doc if child.tag in conversion_map}
+        valid_data_elements = get_valid_signed_data_elements(xml_tree_root,
+                                                             signing_certificate_chain,
+                                                             certificate_common_name)
+        # for element in valid_data_elements.iter():
+
+        mc_data = {conversion_map[element.tag]: element.text
+                   for element in valid_data_elements if element.tag in conversion_map}
+
         # convert money string to integer*100 without rounding errors
         if '.' in mc_data['amount']:
             pounds, pennies = mc_data['amount'].split('.')
@@ -59,11 +74,11 @@ def mastercard_request(xml_data):
 
         new_tree = remove_xml_element_tree(xml_doc, "Signature")
 
-        return etree.tostring(new_tree).decode('utf8'), mc_data, True, None
+        return etree.tostring(new_tree).decode('utf8'), mc_data, None, 200
 
     except etree.ParseError as e:
-        return None, mc_data, False, f'XML Parse Error: {e}'
-    except (TypeError, IndexError, KeyError, AttributeError) as e:
-        return None, mc_data, False, f'Error {e}'
-
-
+        return None, mc_data, f'XML Parse Error: {e}', 400
+    except (TypeError, IndexError, KeyError, AttributeError, InvalidInput ) as e:
+        return None, mc_data, f'Error {e}', 400
+    except (InvalidCertificate, InvalidSignature, InvalidDigest) as e:
+        return None, mc_data, f'Error {e}', 404
