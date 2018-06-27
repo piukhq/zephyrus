@@ -9,9 +9,7 @@ from cryptography import x509
 from cryptography.x509.oid import NameOID
 from cryptography.hazmat.primitives import hashes
 from signxml import XMLVerifier, XMLSigner, methods as sign_methods
-from app.mastercard.process_xml_request import mastercard_request
 from unittest.mock import patch
-import settings
 import lxml.etree as etree
 import hashlib
 import base64
@@ -85,7 +83,6 @@ class SignedXML(BasicXML):
 
         super().__init__(xml=xml.decode('utf8'))
 
-
     def mock_valid_settings(self):
         """
         This is the self signed certificate and common name as we expect to be
@@ -109,51 +106,9 @@ class SignedXML(BasicXML):
         XML signature - this is an in built security measure.
         However, requires more dev ops support to install system libraries etc.
 
-        :return:
+        :return: valid_data
         """
-
-        assertion_data = XMLVerifier().verify(self.xml, x509_cert=root_cert, cert_subject_name=cert_subject_name)\
-            .signed_xml
-        print (assertion_data)
-        return assertion_data
-
-    def process_signed_envelope(self):
-        """
-        Manual method not using signxml and assuming envelope, sha1, and c14n
-        Requires XML security measures to be added
-
-        Note built in xml.etree can be used but exclusive is not supported
-
-        :return:
-        """
-        signature = Signature(self.get_xml_element_tree("Signature"))
-
-        # Remove signature section as envelope method signs the rest of the document
-        self.remove("Signature")
-        # Canonicalize the document to be hashed
-        f2 = self.canonicalize_xml(self.tree)
-
-        print(f2.getvalue())
-
-        self.computed_digest_value = self.get_hash(f2.getvalue())
-        print(self.computed_digest_value)
-
-        signature_value_element = signature.get_xml_element('SignatureValue')
-        self.signature_value = signature_value_element.text
-        print(self.signature_value)
-
-        digest_value_element = signature.get_xml_element('DigestValue')
-        self.digest_value = digest_value_element.text
-        print(self.digest_value)
-
-        X509_value_element = signature.get_xml_element('X509Certificate')
-        self.X509_value = X509_value_element.text
-        print(self.X509_value)
-
-        print(base64.b64decode(self.X509_value))
-
-        #signature_value = self.canonicalize_xml(signature_value)
-        #signature_value_str = signature_value.getvalue().decode("utf-8")
+        return XMLVerifier().verify(self.xml, x509_cert=root_cert, cert_subject_name=cert_subject_name).signed_xml
 
 
 class Certificate:
@@ -263,8 +218,8 @@ class MockMastercardAuthTransaction:
         self.signature = ""
 
         self.args_list = [
-            'ref_num','timestamp', 'bank_cust_num','trans_id', "trans_amt", "merch_id", "merch_name_loc", "trans_date",
-            "trans_time", "merch_cat_cd", "acquirer_ica","wlt_id", "token_rqstr_id", "ret_cd", "digest",
+            'ref_num', 'timestamp', 'bank_cust_num', 'trans_id', "trans_amt", "merch_id", "merch_name_loc",
+            "trans_date", "trans_time", "merch_cat_cd", "acquirer_ica", "wlt_id", "token_rqstr_id", "ret_cd", "digest",
             "signature_value", "x509_cert"
         ]
 
@@ -337,6 +292,16 @@ class MockMastercardAuthTransaction:
         return etree.ElementTree(etree.fromstring(self.xml.encode('utf-8')))
 
 
+def valid_transaction_xml(xml):
+    ret = False
+    if "</Transaction>" in xml:
+        try:
+            etree.fromstring(xml)
+            ret = True
+        except etree.ParseError:
+            pass
+    return ret
+
 class MasterCardAuthTestCases(TestCase):
 
     TESTING = True
@@ -356,16 +321,16 @@ class MasterCardAuthTestCases(TestCase):
         with patch('app.mastercard.process_xml_request.get_certificate_details') as mock_certificate:
             mock_certificate.return_value = signed_xml.mock_valid_settings()
             resp = self.client.post('/mastercard', data=signed_xml.xml, content_type="text/xml")
+        self.assertTrue(valid_transaction_xml(resp.json), "Invalid XML response")
         self.assert200(resp)
-        print(resp.data.decode('utf8'))
 
     def test_invalid_transaction_response_to_wrong_common_name(self):
         signed_xml = SignedXML(MockMastercardAuthTransaction())
         with patch('app.mastercard.process_xml_request.get_certificate_details') as mock_certificate:
             mock_certificate.return_value = signed_xml.signing_cert.root_pem_certificate, "unknown"
             resp = self.client.post('/mastercard', data=signed_xml.xml, content_type="text/xml")
+        self.assertTrue(valid_transaction_xml(resp.json), "Invalid XML response")
         self.assert404(resp)
-        print(resp.data.decode('utf8'))
 
     def test_invalid_transaction_response_to_wrong_cert(self):
         signed_xml = SignedXML(MockMastercardAuthTransaction())
@@ -373,8 +338,8 @@ class MasterCardAuthTestCases(TestCase):
             cert = Certificate()
             mock_certificate.return_value = cert.public_settings
             resp = self.client.post('/mastercard', data=signed_xml.xml, content_type="text/xml")
+        self.assertTrue(valid_transaction_xml(resp.json), "Invalid XML response")
         self.assert404(resp)
-        print(resp.data.decode('utf8'))
 
     def test_tampered_message(self):
         trans = MockMastercardAuthTransaction(
@@ -393,19 +358,19 @@ class MasterCardAuthTestCases(TestCase):
             digest="oh5jTf3ufNbKvfE8WzsssHce95E=",
         )
         signed_xml = SignedXML(trans)
-        tampered_xml = signed_xml.xml.decode('utf8').replace("0.45","500")
+        tampered_xml = signed_xml.xml.decode('utf8').replace("0.45", "500")
         with patch('app.mastercard.process_xml_request.get_certificate_details') as mock_certificate:
             cert = Certificate()
             mock_certificate.return_value = cert.public_settings
             resp = self.client.post('/mastercard', data=tampered_xml.encode('utf8'), content_type="text/xml")
+        self.assertTrue(valid_transaction_xml(resp.json), "Invalid XML response")
         self.assert404(resp)
-        print(resp.data.decode('utf8'))
 
     def test_xml_mastercard_processing(self):
         signed_xml = SignedXML(MockMastercardAuthTransaction())
         with patch('app.mastercard.process_xml_request.get_certificate_details') as mock_certificate:
             mock_certificate.return_value = signed_xml.mock_valid_settings()
-            return_xml, mc_data, message, code = mastercard_request(signed_xml.xml.decode("utf-8"))
+            return_xml, mc_data, message, code = mastercard_request(signed_xml.xml)
         self.assertEquals(message, None)
         self.assertEquals(code, 200)
         expected = {
@@ -420,11 +385,11 @@ class MasterCardAuthTestCases(TestCase):
         }
         self.assertDictEqual(expected, mc_data)
 
-    def test_xml_mastercard_processing2(self):
+    def test_xml_mastercard_processing_alt_data1(self):
         trans = MockMastercardAuthTransaction(
             "XXÿ", "2018-04-07T17:51:01.0000700-00:00", "999456789012345",
             trans_id="11111",
-            trans_amt="0.45",
+            trans_amt="45",
             merch_id="88888888",
             merch_name_loc="Best #456 Hollywood, FL",
             trans_date="12312010",
@@ -439,11 +404,11 @@ class MasterCardAuthTestCases(TestCase):
         signed_xml = SignedXML(trans)
         with patch('app.mastercard.process_xml_request.get_certificate_details') as mock_certificate:
             mock_certificate.return_value = signed_xml.mock_valid_settings()
-            return_xml, mc_data, message, code = mastercard_request(signed_xml.xml.decode("utf-8"))
+            return_xml, mc_data, message, code = mastercard_request(signed_xml.xml)
         self.assertEquals(message, None)
         self.assertEquals(code, 200)
         expected = {
-            'amount': 45,
+            'amount': 4500,
             'payment_card_token': '999456789012345',
             'third_party_id': 'XXÿ',
             'mid': '88888888',
@@ -459,7 +424,7 @@ class MasterCardAuthTestCases(TestCase):
         tampered_xml = signed_xml.xml.decode('utf8').replace("0.45", "500")
         with patch('app.mastercard.process_xml_request.get_certificate_details') as mock_certificate:
             mock_certificate.return_value = signed_xml.mock_valid_settings()
-            return_xml, mc_data, message, code = mastercard_request(tampered_xml)
+            return_xml, mc_data, message, code = mastercard_request(tampered_xml.encode('utf8'))
         self.assertEqual(mc_data, {})
         self.assertEquals(message, "Error Digest mismatch for reference 0")
         self.assertEquals(code, 404)
@@ -468,7 +433,7 @@ class MasterCardAuthTestCases(TestCase):
         signed_xml = SignedXML(MockMastercardAuthTransaction(trans_amt="0.45"))
         with patch('app.mastercard.process_xml_request.get_certificate_details') as mock_certificate:
             mock_certificate.return_value = signed_xml.signing_cert.root_pem_certificate, "unknown"
-            return_xml, mc_data, message, code = mastercard_request(signed_xml.xml.decode("utf-8"))
+            return_xml, mc_data, message, code = mastercard_request(signed_xml.xml)
         self.assertEquals(message, "Error Certificate subject common name mismatch")
         self.assertEquals(code, 404)
         self.assertEqual(mc_data, {})
@@ -478,8 +443,8 @@ class MasterCardAuthTestCases(TestCase):
         with patch('app.mastercard.process_xml_request.get_certificate_details') as mock_certificate:
             cert = Certificate()
             mock_certificate.return_value = cert.public_settings
-            return_xml, mc_data, message, code = mastercard_request(signed_xml.xml.decode("utf-8"))
-        self.assertIn( "Signature verification", message)
+            return_xml, mc_data, message, code = mastercard_request(signed_xml.xml)
+        self.assertIn("Signature verification", message)
         self.assertEquals(code, 404)
         self.assertEqual(mc_data, {})
 
@@ -506,22 +471,13 @@ class MasterCardAuthTestCases(TestCase):
             ret_cd="0",
             digest="oh5jTf3ufNbKvfE8WzsssHce95E=",
         )
-        print("input trans:")
-        print(etree.tostring(trans.xml_tree).decode('utf8'))
         root_generated_signed_xml = cert.sign(trans.xml_tree)
         generated_signed_xml = etree.tostring(root_generated_signed_xml)
-        print("signed trans:")
-        print(generated_signed_xml.decode('utf8'))
+        # print(generated_signed_xml.decode('utf8'))
         valid_data_elements = get_valid_signed_data_elements(generated_signed_xml,
                                                              cert.root_pem_certificate, cert.common_name)
-
-        cert_raw = cert.root_pem_certificate.decode('utf8')
-        print(base64.b64decode(cert_raw))
-
         count = 0
         for element in valid_data_elements:
-            print(f"{element.tag}{element.text}")
             if element.tag in trans.tags_list:
-                print(element.tag)
                 self.assertEqual(getattr(trans, trans.args_list[count]), element.text)
                 count += 1

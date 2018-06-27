@@ -5,45 +5,40 @@ from app.errors import CustomException
 import lxml.etree as etree
 
 
-def mastercard_signed_xml(func):
+def mastercard_signed_xml_response(func):
     """Decorator to map request to standard pattern inserting data into response data
     and replying in standard error format for mastercard
-
-    :param func:
-    :return:
     """
 
     def wrapper(*args, **kwargs):
-        print("enter")
-        xml_data = request.data.decode("utf-8")
-        xml, mc_data, message, code = mastercard_request(xml_data)
-        request.data = mc_data
+        xml, mc_data, message, code = mastercard_request(request.data)
+        # message is currently not used but mastercard might in future want this in the xml reponse
         try:
+            request.xml_data = mc_data
             ret = func(*args, **kwargs)
-            print(ret)
+            if not ret['success'] and code == 200:
+                code = 400
+                # might need in future to set and return message = "Data processing error" but currently not used
         except CustomException:
             code = 400
+        except BaseException:
+            code = 500
         return xml, code
 
     return wrapper
 
 
-def get_xml_element(element_tree, element_tag):
-    for element in element_tree.iter():
-        if element_tag in element.tag:
-            return element
-    return None
-
-
-def get_xml_element_tree(element_tree, element_tag):
-        return etree.ElementTree(get_xml_element(element_tree, element_tag))
-
-
-def remove_xml_element_tree(element_tree, element_tag):
-        element = get_xml_element(element_tree, element_tag)
-        parent = element.getparent()
-        parent.remove(element)
-        return element_tree
+def remove_from_xml_string(xml_string, start_string, end_string):
+    end = 0
+    try:
+        start = xml_string.index(start_string)
+        if 0 < start < len(xml_string):
+            end = xml_string.index(end_string, start) + len(end_string)
+            if end <= start:
+                raise ValueError
+        return "{}{}".format(xml_string[:start], xml_string[end:])
+    except ValueError:
+        return ""
 
 
 def get_valid_signed_data_elements(binary_xml, root_cert, cert_subject_name):
@@ -60,16 +55,21 @@ def get_certificate_details():
 def mastercard_request(xml_data):
     mc_data = {}
     signing_certificate_chain, certificate_common_name = get_certificate_details()
+    response_xml = ""
     try:
-        binary_xml = xml_data.encode('utf-8')
-        xml_doc = etree.fromstring(binary_xml)
+        # To ensure we always return an identical format we can remove the signature from the document
+        # using string methods:
+        response_xml = remove_from_xml_string(xml_data.decode('utf8'), "<ds:Signature", "/ds:Signature>")
+
+        xml_doc = etree.fromstring(xml_data)
         xml_tree_root = etree.ElementTree(xml_doc)
+        valid_data_elements = get_valid_signed_data_elements(xml_tree_root,
+                                                             signing_certificate_chain,
+                                                             certificate_common_name)
 
-
-
-        # need ('time', 'amount', 'mid', 'third_party_id', 'auth_code', 'currency_code', 'payment_card_token')
-        # get client by client id gets ('client_id', 'secret', 'organisation') may not be useful
-
+        # need for hermes 'time', 'amount', 'mid', 'third_party_id', 'auth_code', 'currency_code', 'payment_card_token'
+        # map mastercard tags to bink hermes naming convention then tidy up bespoke discrepancies such as amount and
+        # time and add missing values
         conversion_map = {
             'merchId': 'mid',
             'transAmt': 'amount',
@@ -78,11 +78,6 @@ def mastercard_request(xml_data):
             'transDate': 'date',
             'transTime': 'time'
         }
-
-        valid_data_elements = get_valid_signed_data_elements(xml_tree_root,
-                                                             signing_certificate_chain,
-                                                             certificate_common_name)
-        # for element in valid_data_elements.iter():
 
         mc_data = {conversion_map[element.tag]: element.text
                    for element in valid_data_elements if element.tag in conversion_map}
@@ -97,13 +92,11 @@ def mastercard_request(xml_data):
         mc_data['currency_code'] = 'GBP'
         mc_data['auth_code'] = '.'  # should be optional
 
-        new_tree = remove_xml_element_tree(xml_doc, "Signature")
-
-        return etree.tostring(new_tree).decode('utf8'), mc_data, None, 200
+        return response_xml, mc_data, None, 200
 
     except etree.ParseError as e:
-        return None, mc_data, f'XML Parse Error: {e}', 400
-    except (TypeError, IndexError, KeyError, AttributeError, InvalidInput ) as e:
-        return None, mc_data, f'Error {e}', 400
+        return response_xml, mc_data, f'XML Parse Error: {e}', 400
+    except (TypeError, IndexError, KeyError, AttributeError, ValueError, InvalidInput) as e:
+        return response_xml, mc_data, f'Error {e}', 400
     except (InvalidCertificate, InvalidSignature, InvalidDigest) as e:
-        return None, mc_data, f'Error {e}', 404
+        return response_xml, mc_data, f'Error {e}', 404

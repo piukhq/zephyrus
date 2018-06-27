@@ -13,6 +13,9 @@ requests = "*"
 flask-redis = "*"
 lxml = "*"
 signxml = "*"
+voluptuous = "*"
+maya = "*"
+python-jose-cryptodome = "*"
 
 [dev-packages]
 flask-testing = "*"

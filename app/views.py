@@ -1,7 +1,7 @@
 import voluptuous
 from flask import request
 from flask_restplus import Resource
-
+from app.mastercard.process_xml_request import mastercard_signed_xml_response
 from app import CustomException
 from app.amex.utils import save_transaction, format_data
 from app.authentication.amex import jwt_auth
@@ -26,13 +26,12 @@ class Amex(Resource):
 
 class MasterCard(Resource):
 
-    @mastercard_signed_xml
+    @mastercard_signed_xml_response
     def post(self):
         data = request.data
-        print(data)
-        # todo: Commment out when merged with Development
+        # todo: Commment in when merged with Development
         #try:
-        #    schema.mastercard_auth_transaction(data)
+        #    schema.auth_transaction(data)
         #except voluptuous.error.Invalid as e:
         #    raise CustomException(INVALID_DATA_FORMAT, e) from e
         #transaction = format_data(data)
