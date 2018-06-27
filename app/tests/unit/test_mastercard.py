@@ -1,5 +1,6 @@
 from app import create_app
 from flask_testing import TestCase
+from flask import make_response
 from app.mastercard.process_xml_request import mastercard_request
 from app.mastercard.process_xml_request import get_valid_signed_data_elements
 from cryptography.hazmat.backends import default_backend
@@ -319,27 +320,43 @@ class MasterCardAuthTestCases(TestCase):
     def test_valid_transaction_response(self):
         signed_xml = SignedXML(MockMastercardAuthTransaction())
         with patch('app.mastercard.process_xml_request.get_certificate_details') as mock_certificate:
-            mock_certificate.return_value = signed_xml.mock_valid_settings()
-            resp = self.client.post('/mastercard', data=signed_xml.xml, content_type="text/xml")
+            with patch('app.utils.requests.post') as mock_post:
+                mock_certificate.return_value = signed_xml.mock_valid_settings()
+                mock_post.return_value =  make_response("",201)
+                resp = self.client.post('/mastercard', data=signed_xml.xml, content_type="text/xml")
         self.assertTrue(valid_transaction_xml(resp.json), "Invalid XML response")
         self.assert200(resp)
 
     def test_invalid_transaction_response_to_wrong_common_name(self):
         signed_xml = SignedXML(MockMastercardAuthTransaction())
         with patch('app.mastercard.process_xml_request.get_certificate_details') as mock_certificate:
-            mock_certificate.return_value = signed_xml.signing_cert.root_pem_certificate, "unknown"
-            resp = self.client.post('/mastercard', data=signed_xml.xml, content_type="text/xml")
+            with patch('app.utils.requests.post') as mock_post:
+                mock_post.return_value = make_response("", 201)
+                mock_certificate.return_value = signed_xml.signing_cert.root_pem_certificate, "unknown"
+                resp = self.client.post('/mastercard', data=signed_xml.xml, content_type="text/xml")
         self.assertTrue(valid_transaction_xml(resp.json), "Invalid XML response")
         self.assert404(resp)
 
     def test_invalid_transaction_response_to_wrong_cert(self):
         signed_xml = SignedXML(MockMastercardAuthTransaction())
         with patch('app.mastercard.process_xml_request.get_certificate_details') as mock_certificate:
-            cert = Certificate()
-            mock_certificate.return_value = cert.public_settings
-            resp = self.client.post('/mastercard', data=signed_xml.xml, content_type="text/xml")
+            with patch('app.utils.requests.post') as mock_post:
+                mock_post.return_value = make_response("", 201)
+                cert = Certificate()
+                mock_certificate.return_value = cert.public_settings
+                resp = self.client.post('/mastercard', data=signed_xml.xml, content_type="text/xml")
         self.assertTrue(valid_transaction_xml(resp.json), "Invalid XML response")
         self.assert404(resp)
+
+    def test_valid_transaction_response_when_hermes_fails(self):
+        signed_xml = SignedXML(MockMastercardAuthTransaction())
+        with patch('app.mastercard.process_xml_request.get_certificate_details') as mock_certificate:
+            with patch('app.utils.requests.post') as mock_post:
+                mock_certificate.return_value = signed_xml.mock_valid_settings()
+                mock_post.return_value =  make_response("",400)
+                resp = self.client.post('/mastercard', data=signed_xml.xml, content_type="text/xml")
+        self.assertTrue(valid_transaction_xml(resp.json), "Invalid XML response")
+        self.assertGreaterEqual(resp.status_code, 500)
 
     def test_tampered_message(self):
         trans = MockMastercardAuthTransaction(
@@ -374,14 +391,12 @@ class MasterCardAuthTestCases(TestCase):
         self.assertEquals(message, None)
         self.assertEquals(code, 200)
         expected = {
-            'amount': 20059,
+            'amount': "200.59",
             'payment_card_token': '123456789012345',
             'third_party_id': 'MDSPX38FG',
             'mid': '687555537877464',
-            'date': '12312010',
-            'time': '154539',
-            'currency_code': 'GBP',
-            'auth_code': '.'
+            'time': '2010-12-31T15:45:39',
+            'currency_code': 'GBP'
         }
         self.assertDictEqual(expected, mc_data)
 
@@ -408,14 +423,12 @@ class MasterCardAuthTestCases(TestCase):
         self.assertEquals(message, None)
         self.assertEquals(code, 200)
         expected = {
-            'amount': 4500,
+            'amount': "45",
             'payment_card_token': '999456789012345',
             'third_party_id': 'XXÿ',
             'mid': '88888888',
-            'date': '12312010',
-            'time': '154539',
-            'currency_code': 'GBP',
-            'auth_code': '.'
+            'time': '2010-12-31T15:45:39',
+            'currency_code': 'GBP'
         }
         self.assertDictEqual(expected, mc_data)
 

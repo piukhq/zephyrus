@@ -2,6 +2,7 @@ from settings import MASTERCARD_TRANSACTION_SIGNING_CERTIFICATE, MASTERCARD_CERT
 from signxml import XMLVerifier, InvalidCertificate, InvalidSignature, InvalidDigest, InvalidInput
 from flask import request
 from app.errors import CustomException
+from datetime import datetime
 import lxml.etree as etree
 
 
@@ -19,8 +20,13 @@ def mastercard_signed_xml_response(func):
             if not ret['success'] and code == 200:
                 code = 400
                 # might need in future to set and return message = "Data processing error" but currently not used
-        except CustomException:
-            code = 400
+
+        except CustomException as e:
+            if e.name == "CONNECTION_ERROR":
+                code = e.code
+            # error code returned by XML processing should be used unless 200
+            elif code == 200:
+                code = 400
         except BaseException:
             code = 500
         return xml, code
@@ -68,29 +74,32 @@ def mastercard_request(xml_data):
                                                              certificate_common_name)
 
         # need for hermes 'time', 'amount', 'mid', 'third_party_id', 'auth_code', 'currency_code', 'payment_card_token'
-        # map mastercard tags to bink hermes naming convention then tidy up bespoke discrepancies such as amount and
-        # time and add missing values
+        # map mastercard tags to bink hermes naming convention then tidy up bespoke discrepancies such as time
+
         conversion_map = {
             'merchId': 'mid',
             'transAmt': 'amount',
             'bankCustNum': 'payment_card_token',
             'refNum': 'third_party_id',
-            'transDate': 'date',
-            'transTime': 'time'
+            'transDate': 'mc_date',
+            'transTime': 'mc_time'
         }
 
         mc_data = {conversion_map[element.tag]: element.text
                    for element in valid_data_elements if element.tag in conversion_map}
 
-        # convert money string to integer*100 without rounding errors
-        if '.' in mc_data['amount']:
-            pounds, pennies = mc_data['amount'].split('.')
-            mc_data['amount'] = f"{pounds}{pennies:<02}"
-        else:
-            mc_data['amount'] = f"{mc_data['amount']}00"
-
         mc_data['currency_code'] = 'GBP'
-
+        auth_time = datetime(
+            year=int(mc_data['mc_date'][4:]),
+            month=int(mc_data['mc_date'][:2]),
+            day=int(mc_data['mc_date'][2:4]),
+            hour=int(mc_data['mc_time'][:2]),
+            minute=int(mc_data['mc_time'][2:4]),
+            second=int(mc_data['mc_time'][4:])
+        )
+        mc_data['time'] = auth_time.isoformat()
+        del(mc_data['mc_date'])
+        del(mc_data['mc_time'])
 
         return response_xml, mc_data, None, 200
 

@@ -51,5 +51,6 @@ class MasterCard(Resource):
         except voluptuous.error.Invalid as e:
             raise CustomException(INVALID_DATA_FORMAT, e) from e
 
+        transaction['amount'] = int(Decimal(transaction['amount']) * 100)  # conversion to pence
         save_transaction(transaction)
         return {'success': True}
