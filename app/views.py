@@ -43,12 +43,11 @@ class MasterCard(Resource):
 
     @mastercard_signed_xml_response
     def post(self):
-        data = request.data
-        # todo: Commment in when merged with Development
-        #try:
-        #    schema.auth_transaction(data)
-        #except voluptuous.error.Invalid as e:
-        #    raise CustomException(INVALID_DATA_FORMAT, e) from e
-        #transaction = format_data(data)
-        #save_transaction(transaction)
+        transaction = request.transaction_data
+        try:
+            schema.auth_transaction(transaction)
+        except voluptuous.error.Invalid as e:
+            raise CustomException(INVALID_DATA_FORMAT, e) from e
+
+        save_transaction(transaction)
         return {'success': True}

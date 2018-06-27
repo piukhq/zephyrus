@@ -14,7 +14,7 @@ def mastercard_signed_xml_response(func):
         xml, mc_data, message, code = mastercard_request(request.data)
         # message is currently not used but mastercard might in future want this in the xml reponse
         try:
-            request.xml_data = mc_data
+            request.transaction_data = mc_data
             ret = func(*args, **kwargs)
             if not ret['success'] and code == 200:
                 code = 400
@@ -85,12 +85,12 @@ def mastercard_request(xml_data):
         # convert money string to integer*100 without rounding errors
         if '.' in mc_data['amount']:
             pounds, pennies = mc_data['amount'].split('.')
-            mc_data['amount'] = int(f"{pounds}{pennies:<02}")
+            mc_data['amount'] = f"{pounds}{pennies:<02}"
         else:
-            mc_data['amount'] = int(f"{mc_data['amount']}00")
+            mc_data['amount'] = f"{mc_data['amount']}00"
 
         mc_data['currency_code'] = 'GBP'
-        mc_data['auth_code'] = '.'  # should be optional
+
 
         return response_xml, mc_data, None, 200
 
