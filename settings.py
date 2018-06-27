@@ -14,5 +14,7 @@ REDIS_URL = os.getenv('ZEPHYRUS_REDIS_URL', 'redis://localhost:6379/8')
 
 CLIENT_INFO_STORAGE_TIMEOUT = 1/60    # Minimum number of minutes before redis cache can be updated by hermes
 
+SIGNATURE_SECRET = os.getenv('SIGNATURE_SECRET', 'EL411REgqoW8q-Z8ncZ0m88bkxL9CQfRHT4sSHOJ0RE')
+
 MASTERCARD_TRANSACTION_SIGNING_CERTIFICATE = None
 MASTERCARD_CERTIFICATE_COMMON_NAME = ""

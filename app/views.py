@@ -1,28 +1,26 @@
-from flask import request, jsonify, make_response
+import voluptuous
+from flask import request
 from flask_restplus import Resource
-from app.clients import ClientInfo
-from app.errors import CLIENT_SECRET_DOES_NOT_MATCH, CustomException
-from .mastercard.process_xml_request import mastercard_signed_xml
 
-
-class Auth(Resource):
-    def post(self):
-        client_id = request.json['client_id']
-        client_secret = request.json['client_secret']
-
-        client_info_store = ClientInfo()
-        client = client_info_store.get_client(client_id)
-
-        if client['secret'] != client_secret:
-            raise CustomException(CLIENT_SECRET_DOES_NOT_MATCH)
-
-        # if match, generate and return token/api key, else return error
-
-        return make_response(jsonify(client))
+from app import CustomException
+from app.amex.utils import save_transaction, format_data
+from app.authentication.amex import jwt_auth
+from app.errors import INVALID_DATA_FORMAT
+from app import schema
 
 
 class Amex(Resource):
+    @jwt_auth
     def post(self):
+        data = request.json
+        try:
+            schema.amex_auth_transaction(data)
+        except voluptuous.error.Invalid as e:
+            raise CustomException(INVALID_DATA_FORMAT, e) from e
+
+        transaction = format_data(data)
+        save_transaction(transaction)
+
         return {'success': True}
 
 
