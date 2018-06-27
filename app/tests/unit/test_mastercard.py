@@ -303,6 +303,7 @@ def valid_transaction_xml(xml):
             pass
     return ret
 
+
 class MasterCardAuthTestCases(TestCase):
 
     TESTING = True
@@ -322,7 +323,7 @@ class MasterCardAuthTestCases(TestCase):
         with patch('app.mastercard.process_xml_request.get_certificate_details') as mock_certificate:
             with patch('app.utils.requests.post') as mock_post:
                 mock_certificate.return_value = signed_xml.mock_valid_settings()
-                mock_post.return_value =  make_response("",201)
+                mock_post.return_value = make_response("", 201)
                 resp = self.client.post('/mastercard', data=signed_xml.xml, content_type="text/xml")
         self.assertTrue(valid_transaction_xml(resp.json), "Invalid XML response")
         self.assert200(resp)
@@ -353,7 +354,7 @@ class MasterCardAuthTestCases(TestCase):
         with patch('app.mastercard.process_xml_request.get_certificate_details') as mock_certificate:
             with patch('app.utils.requests.post') as mock_post:
                 mock_certificate.return_value = signed_xml.mock_valid_settings()
-                mock_post.return_value =  make_response("",400)
+                mock_post.return_value = make_response("", 400)
                 resp = self.client.post('/mastercard', data=signed_xml.xml, content_type="text/xml")
         self.assertTrue(valid_transaction_xml(resp.json), "Invalid XML response")
         self.assertGreaterEqual(resp.status_code, 500)
