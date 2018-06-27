@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 import voluptuous
 from flask import request
 from flask_restplus import Resource
@@ -32,7 +34,7 @@ class Amex(Resource):
         except voluptuous.error.Invalid as e:
             raise CustomException(INVALID_DATA_FORMAT, e) from e
 
-        transaction['amount'] = int(float(transaction['amount']) * 100)  # conversion to pence
+        transaction['amount'] = int(Decimal(transaction['amount']) * 100)  # conversion to pence
 
         save_transaction(transaction)
 
