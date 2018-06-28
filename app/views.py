@@ -6,7 +6,7 @@ from flask_restplus import Resource
 
 from app import CustomException
 from app.utils import save_transaction
-from app.authentication.amex import jwt_auth
+from app.authentication.token_utils import jwt_auth
 from app.errors import INVALID_DATA_FORMAT
 from app import schema
 

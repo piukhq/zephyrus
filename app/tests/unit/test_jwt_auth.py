@@ -6,7 +6,7 @@ from flask_testing import TestCase
 
 import settings
 from app import create_app, CustomException
-from app.authentication.amex import generate_jwt
+from app.authentication.token_utils import generate_jwt
 from app.clients import ClientInfo
 from app.errors import CLIENT_DOES_NOT_EXIST
 
