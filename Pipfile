@@ -10,14 +10,17 @@ python-dotenv = "*"
 flask-restplus = "*"
 requests = "*"
 flask-redis = "*"
+lxml = "*"
+signxml = "*"
+voluptuous = "*"
 maya = "*"
 python-jose-cryptodome = "*"
-voluptuous = "*"
 
 [dev-packages]
 pytest = "*"
 flask-testing = "*"
 pytest-cov = "*"
+
 
 [requires]
 python_version = "3.6"
