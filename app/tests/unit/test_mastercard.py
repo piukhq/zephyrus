@@ -35,6 +35,7 @@ class BasicXML:
         element = self.get_xml_element(element_tag)
         parent = element.getparent()
         parent.remove(element)
+        self.xml = etree.tostring(self.tree).decode('utf-8')
 
     def get_xml_element_tree(self, element_tag):
         return etree.ElementTree(self.get_xml_element(element_tag))
@@ -66,8 +67,22 @@ class Signature(BasicXML):
 
 class UnsignedXML(BasicXML):
 
+    def __init__(self, transaction):
+        xml = etree.tostring(transaction.xml_tree)
+        super().__init__(xml=xml.decode('utf8'))
+
+    def get_transaction(self):
+        return Transaction(self.xml)
+
+
+class Transaction:
+
     def __init__(self, xml):
-        super().__init__(xml=xml)
+        self.xml = xml
+
+    @property
+    def xml_tree(self):
+        return etree.ElementTree(etree.fromstring(self.xml.encode('utf-8')))
 
 
 class SignedXML(BasicXML):
@@ -174,7 +189,7 @@ class Certificate:
         return self.root_pem_certificate, self.common_name
 
 
-class MockMastercardAuthTransaction:
+class MockMastercardAuthTransaction(Transaction):
 
     def __init__(self, *args, **kwargs):
         self.ref_num = "MDSPX38FG"
@@ -284,14 +299,6 @@ class MockMastercardAuthTransaction:
         </ds:Signature>
 """
 
-    def create_signed_xml(self, signature_value, x509_cert):
-        self.signature = self.get_signature_from_format(signature_value, x509_cert)
-        return self.xml
-
-    @property
-    def xml_tree(self):
-        return etree.ElementTree(etree.fromstring(self.xml.encode('utf-8')))
-
 
 def valid_transaction_xml(xml):
     ret = False
@@ -340,6 +347,21 @@ class MasterCardAuthTestCases(TestCase):
 
     def test_invalid_transaction_response_to_wrong_cert(self):
         signed_xml = SignedXML(MockMastercardAuthTransaction())
+        with patch('app.mastercard.process_xml_request.get_certificate_details') as mock_certificate:
+            with patch('app.utils.requests.post') as mock_post:
+                mock_post.return_value = make_response("", 201)
+                cert = Certificate()
+                mock_certificate.return_value = cert.public_settings
+                resp = self.client.post('/mastercard', data=signed_xml.xml, content_type="text/xml")
+        self.assertTrue(valid_transaction_xml(resp.json), "Invalid XML response")
+        self.assert404(resp)
+
+    def test_invalid_transaction_response_no_amount_in_xml(self):
+        xml_obj = UnsignedXML(MockMastercardAuthTransaction())
+        xml_obj.remove("transAmt")
+        print(xml_obj.xml)
+        signed_xml = SignedXML(xml_obj.get_transaction())
+
         with patch('app.mastercard.process_xml_request.get_certificate_details') as mock_certificate:
             with patch('app.utils.requests.post') as mock_post:
                 mock_post.return_value = make_response("", 201)
