@@ -8,9 +8,15 @@ flask = "*"
 flask-script = "*"
 python-dotenv = "*"
 flask-restplus = "*"
+requests = "*"
+flask-redis = "*"
+maya = "*"
+python-jose-cryptodome = "*"
+voluptuous = "*"
 
 [dev-packages]
 pytest = "*"
+flask-testing = "*"
 pytest-cov = "*"
 
 [requires]
