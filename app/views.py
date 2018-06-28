@@ -6,7 +6,7 @@ from flask_restplus import Resource
 from app.mastercard.process_xml_request import mastercard_signed_xml_response
 from app import CustomException
 from app.utils import save_transaction
-from app.authentication.amex import jwt_auth
+from app.authentication.token_utils import jwt_auth
 from app.errors import INVALID_DATA_FORMAT
 from app import schema
 
