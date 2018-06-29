@@ -1,7 +1,7 @@
 from functools import wraps
 
 import jose.jwt
-import maya
+import arrow
 from flask import request, jsonify, make_response, g
 from flask_restplus import Resource
 
@@ -25,13 +25,13 @@ def get_params(*params):
 
 
 def generate_jwt(client):
-    time_now = maya.now()
+    time_now = arrow.now()
     claims = {
-        'exp': time_now.add(minutes=5).epoch,
-        'nbf': time_now.epoch,
+        'exp': time_now.replace(minutes=5).timestamp,
+        'nbf': time_now.timestamp,
         'iss': 'bink',
         'aud': 'https://api.bink.com',
-        'iat': time_now.epoch,
+        'iat': time_now.timestamp,
         'sub': client['client_id']
     }
     return jose.jwt.encode(claims, key=settings.SIGNATURE_SECRET)
