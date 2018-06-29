@@ -26,9 +26,8 @@ class TestJwtAuth(TestCase):
         "secret": "testsecret",
         "organisation": "The Organisation"
     }
-
     amex_auth_end_point = '/auth_transactions/authorize'
-    
+
     def create_app(self):
         return create_app(self, )
 
