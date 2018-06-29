@@ -314,6 +314,7 @@ def valid_transaction_xml(xml):
 class MasterCardAuthTestCases(TestCase):
 
     TESTING = True
+    mastercard_endpoint = '/auth_transactions/mastercard'
 
     def create_app(self):
         return create_app(self, )
@@ -331,7 +332,7 @@ class MasterCardAuthTestCases(TestCase):
             with patch('app.utils.requests.post') as mock_post:
                 mock_certificate.return_value = signed_xml.mock_valid_settings()
                 mock_post.return_value = make_response("", 201)
-                resp = self.client.post('/mastercard', data=signed_xml.xml, content_type="text/xml")
+                resp = self.client.post(self.mastercard_endpoint, data=signed_xml.xml, content_type="text/xml")
         self.assertTrue(valid_transaction_xml(resp.json), "Invalid XML response")
         self.assert200(resp)
 
@@ -341,7 +342,7 @@ class MasterCardAuthTestCases(TestCase):
             with patch('app.utils.requests.post') as mock_post:
                 mock_post.return_value = make_response("", 201)
                 mock_certificate.return_value = signed_xml.signing_cert.root_pem_certificate, "unknown"
-                resp = self.client.post('/mastercard', data=signed_xml.xml, content_type="text/xml")
+                resp = self.client.post(self.mastercard_endpoint, data=signed_xml.xml, content_type="text/xml")
         self.assertTrue(valid_transaction_xml(resp.json), "Invalid XML response")
         self.assert404(resp)
 
@@ -352,7 +353,7 @@ class MasterCardAuthTestCases(TestCase):
                 mock_post.return_value = make_response("", 201)
                 cert = Certificate()
                 mock_certificate.return_value = cert.public_settings
-                resp = self.client.post('/mastercard', data=signed_xml.xml, content_type="text/xml")
+                resp = self.client.post(self.mastercard_endpoint, data=signed_xml.xml, content_type="text/xml")
         self.assertTrue(valid_transaction_xml(resp.json), "Invalid XML response")
         self.assert404(resp)
 
@@ -367,7 +368,7 @@ class MasterCardAuthTestCases(TestCase):
                 mock_post.return_value = make_response("", 201)
                 cert = Certificate()
                 mock_certificate.return_value = cert.public_settings
-                resp = self.client.post('/mastercard', data=signed_xml.xml, content_type="text/xml")
+                resp = self.client.post(self.mastercard_endpoint, data=signed_xml.xml, content_type="text/xml")
         self.assertTrue(valid_transaction_xml(resp.json), "Invalid XML response")
         self.assert404(resp)
 
@@ -377,7 +378,7 @@ class MasterCardAuthTestCases(TestCase):
             with patch('app.utils.requests.post') as mock_post:
                 mock_certificate.return_value = signed_xml.mock_valid_settings()
                 mock_post.return_value = make_response("", 400)
-                resp = self.client.post('/mastercard', data=signed_xml.xml, content_type="text/xml")
+                resp = self.client.post(self.mastercard_endpoint, data=signed_xml.xml, content_type="text/xml")
         self.assertTrue(valid_transaction_xml(resp.json), "Invalid XML response")
         self.assertGreaterEqual(resp.status_code, 500)
 
@@ -402,7 +403,7 @@ class MasterCardAuthTestCases(TestCase):
         with patch('app.mastercard.process_xml_request.get_certificate_details') as mock_certificate:
             cert = Certificate()
             mock_certificate.return_value = cert.public_settings
-            resp = self.client.post('/mastercard', data=tampered_xml.encode('utf8'), content_type="text/xml")
+            resp = self.client.post(self.mastercard_endpoint, data=tampered_xml.encode('utf8'), content_type="text/xml")
         self.assertTrue(valid_transaction_xml(resp.json), "Invalid XML response")
         self.assert404(resp)
 

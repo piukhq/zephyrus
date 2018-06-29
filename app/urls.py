@@ -7,8 +7,9 @@ api = Api()
 
 api.add_resource(HealthCheck, '/healthz', endpoint='api.healthz')
 
-api.add_resource(Auth, '/authorize', endpoint='api.authorize')
+api.add_resource(Auth, '/auth_transactions/authorize', endpoint='api.authorize')
 api.add_resource(Me, '/me', endpoint='api.me')
 
-api.add_resource(Amex, '/amex', endpoint='api.amex')
-api.add_resource(MasterCard, '/mastercard', endpoint='api.mastercard')
+
+api.add_resource(Amex, '/auth_transactions/amex', endpoint='api.amex')
+api.add_resource(MasterCard, '/auth_transactions/mastercard', endpoint='api.mastercard')
