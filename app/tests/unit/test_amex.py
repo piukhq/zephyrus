@@ -13,6 +13,7 @@ from app.clients import ClientInfo
 class TestAmex(TestCase):
     TESTING = True
     headers = {'Authorization': 'token wwed'}
+    amex_endpoint = '/auth_transactions/amex'
 
     payload = {
         "transaction_time": "2013-05-23 20:30:15",
@@ -30,7 +31,7 @@ class TestAmex(TestCase):
     def test_process_auth_transaction_success(self, mock_request, mock_decode, mock_get_client):
         mock_request.return_value.status_code = 201
 
-        resp = self.client.post('/amex', json=self.payload, headers=self.headers)
+        resp = self.client.post(self.amex_endpoint, json=self.payload, headers=self.headers)
 
         self.assertTrue(mock_decode.called)
         self.assertTrue(mock_get_client.called)
@@ -45,7 +46,7 @@ class TestAmex(TestCase):
             "offer_id": "1225"
         }
 
-        resp = self.client.post('/amex', json=payload, headers=self.headers)
+        resp = self.client.post(self.amex_endpoint, json=payload, headers=self.headers)
         self.assertTrue(mock_decode.called)
         self.assertTrue(mock_get_client.called)
         self.assertEqual(resp.status_code, 400)
@@ -54,7 +55,7 @@ class TestAmex(TestCase):
     @mock.patch('requests.post')
     def test_error_connecting_to_hermes_raises_exception(self, mock_request, mock_decode, mock_get_client):
         mock_request.side_effect = requests.ConnectionError
-        resp = self.client.post('/amex', json=self.payload, headers=self.headers)
+        resp = self.client.post(self.amex_endpoint, json=self.payload, headers=self.headers)
 
         self.assertTrue(mock_decode.called)
         self.assertTrue(mock_get_client.called)
@@ -67,7 +68,7 @@ class TestAmex(TestCase):
         hermes_resp.status_code = 400
         mock_request.return_value = hermes_resp
 
-        resp = self.client.post('/amex', json=self.payload, headers=self.headers)
+        resp = self.client.post(self.amex_endpoint, json=self.payload, headers=self.headers)
 
         self.assertTrue(mock_decode.called)
         self.assertTrue(mock_get_client.called)
