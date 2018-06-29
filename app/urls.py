@@ -7,7 +7,7 @@ api = Api()
 
 api.add_resource(HealthCheck, '/healthz', endpoint='api.healthz')
 
-api.add_resource(Auth, '/authorize', endpoint='api.authorize')
+api.add_resource(Auth, '/auth_transactions/authorize', endpoint='api.authorize')
 api.add_resource(Me, '/me', endpoint='api.me')
 
 

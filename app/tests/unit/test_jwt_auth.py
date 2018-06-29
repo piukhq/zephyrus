@@ -27,6 +27,8 @@ class TestJwtAuth(TestCase):
         "organisation": "The Organisation"
     }
 
+    amex_auth_end_point = '/auth_transactions/authorize'
+    
     def create_app(self):
         return create_app(self, )
 
@@ -40,7 +42,7 @@ class TestJwtAuth(TestCase):
         }
         mock_gen_jwt.return_value = 'really_bad_jwt'
 
-        resp = self.client.post('/authorize',
+        resp = self.client.post(self.amex_auth_end_point,
                                 data=json.dumps(self.payload),
                                 content_type='application/json',
                                 headers={})
@@ -56,7 +58,7 @@ class TestJwtAuth(TestCase):
             {'client_id': 'testid', 'secret': 'testsecret'},
         ]
         mock_gen_jwt.return_value = 'really_bad_jwt'
-        resp = self.client.post('/authorize',
+        resp = self.client.post(self.amex_auth_end_point,
                                 data=json.dumps(self.payload),
                                 content_type='application/json',
                                 headers={})
@@ -68,7 +70,7 @@ class TestJwtAuth(TestCase):
         payload = self.payload.copy()
         payload.pop('client_secret')
 
-        resp = self.client.post('/authorize',
+        resp = self.client.post(self.amex_auth_end_point,
                                 data=json.dumps(payload),
                                 content_type='application/json',
                                 headers={})
@@ -84,7 +86,7 @@ class TestJwtAuth(TestCase):
             {'client_id': 'nomatch2', 'secret': 'testsecret'},
         ]
         mock_gen_jwt.return_value = 'really_bad_jwt'
-        resp = self.client.post('/authorize',
+        resp = self.client.post(self.amex_auth_end_point,
                                 data=json.dumps(self.payload),
                                 content_type='application/json',
                                 headers={})
@@ -99,7 +101,7 @@ class TestJwtAuth(TestCase):
             {'client_id': 'testid', 'secret': 'bad_secret'},
         ]
         mock_gen_jwt.return_value = 'really_bad_jwt'
-        resp = self.client.post('/authorize',
+        resp = self.client.post(self.amex_auth_end_point,
                                 data=json.dumps(self.payload),
                                 content_type='application/json',
                                 headers={})
