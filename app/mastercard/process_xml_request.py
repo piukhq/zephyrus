@@ -2,8 +2,8 @@ from settings import MASTERCARD_TRANSACTION_SIGNING_CERTIFICATE, MASTERCARD_CERT
 from signxml import XMLVerifier, InvalidCertificate, InvalidSignature, InvalidDigest, InvalidInput
 from flask import request
 from app.errors import CustomException
-from datetime import datetime
 import lxml.etree as etree
+import arrow
 
 
 def mastercard_signed_xml_response(func):
@@ -89,15 +89,10 @@ def mastercard_request(xml_data):
                    for element in valid_data_elements if element.tag in conversion_map}
 
         mc_data['currency_code'] = 'GBP'
-        auth_time = datetime(
-            year=int(mc_data['mc_date'][4:]),
-            month=int(mc_data['mc_date'][:2]),
-            day=int(mc_data['mc_date'][2:4]),
-            hour=int(mc_data['mc_time'][:2]),
-            minute=int(mc_data['mc_time'][2:4]),
-            second=int(mc_data['mc_time'][4:])
-        )
-        mc_data['time'] = auth_time.isoformat()
+
+        time_obj = arrow.get(mc_data['mc_time'] + mc_data['mc_date'], "HHmmssMMDDYYYY")
+        mc_data['time'] = time_obj.format("YYYY-MM-DD HH:mm:ss")
+
         del(mc_data['mc_date'])
         del(mc_data['mc_time'])
 

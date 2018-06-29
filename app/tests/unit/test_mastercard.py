@@ -419,7 +419,7 @@ class MasterCardAuthTestCases(TestCase):
             'payment_card_token': '123456789012345',
             'third_party_id': 'MDSPX38FG',
             'mid': '687555537877464',
-            'time': '2010-12-31T15:45:39',
+            'time': '2010-12-31 15:45:39',
             'currency_code': 'GBP'
         }
         self.assertDictEqual(expected, mc_data)
@@ -451,7 +451,7 @@ class MasterCardAuthTestCases(TestCase):
             'payment_card_token': '999456789012345',
             'third_party_id': 'XXÿ',
             'mid': '88888888',
-            'time': '2010-12-31T15:45:39',
+            'time': '2010-12-31 15:45:39',
             'currency_code': 'GBP'
         }
         self.assertDictEqual(expected, mc_data)
