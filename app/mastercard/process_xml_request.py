@@ -1,8 +1,10 @@
-from settings import MASTERCARD_TRANSACTION_SIGNING_CERTIFICATE, MASTERCARD_CERTIFICATE_COMMON_NAME
 from signxml import XMLVerifier, InvalidCertificate, InvalidSignature, InvalidDigest, InvalidInput
 from flask import request
 from app.errors import CustomException
 from datetime import datetime
+from azure.storage.blob import BlockBlobService
+import settings
+import io
 import lxml.etree as etree
 
 
@@ -54,8 +56,23 @@ def get_valid_signed_data_elements(binary_xml, root_cert, cert_subject_name):
     return assertion_data_elements
 
 
+def azure_read(file):
+    blob_service = BlockBlobService(
+        account_name=settings.AZURE_ACCOUNT_NAME,
+        account_key=settings.AZURE_ACCOUNT_KEY
+    )
+    azure_path = settings.AZURE_CERTIFICATE_FOLDER.split('/',1)
+    blob = blob_service.get_blob_to_text(
+        azure_path[0],
+        f"{azure_path[1]}/{file}",
+    )
+    return blob
+
+
 def get_certificate_details():
-    return MASTERCARD_TRANSACTION_SIGNING_CERTIFICATE, MASTERCARD_CERTIFICATE_COMMON_NAME
+    pem_signing_cert = azure_read('mc_pem_cecrt')
+    pem_cert_name = azure_read('mc_pem_cert')
+    return pem_signing_cert, pem_cert_name
 
 
 def mastercard_request(xml_data):
