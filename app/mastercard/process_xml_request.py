@@ -61,7 +61,7 @@ def azure_read(file):
         account_name=settings.AZURE_ACCOUNT_NAME,
         account_key=settings.AZURE_ACCOUNT_KEY
     )
-    azure_path = settings.AZURE_CERTIFICATE_FOLDER.split('/',1)
+    azure_path = settings.AZURE_CERTIFICATE_FOLDER.split('/', 1)
     blob = blob_service.get_blob_to_text(
         azure_path[0],
         f"{azure_path[1]}/{file}",
