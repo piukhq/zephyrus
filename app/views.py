@@ -11,6 +11,11 @@ from app.errors import INVALID_DATA_FORMAT
 from app import schema
 
 
+class HealthCheck(Resource):
+    def get(self):
+        return ''
+
+
 class Amex(Resource):
     @jwt_auth
     def post(self):
