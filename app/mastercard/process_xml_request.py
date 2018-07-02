@@ -1,12 +1,15 @@
 from signxml import XMLVerifier, InvalidCertificate, InvalidSignature, InvalidDigest, InvalidInput
+from OpenSSL.crypto import load_certificate, FILETYPE_PEM
 from flask import request
+import textwrap
 from app.errors import CustomException
 from datetime import datetime
 from azure.storage.blob import BlockBlobService
 import settings
-import io
 import lxml.etree as etree
 
+PEM_HEADER = "-----BEGIN CERTIFICATE-----"
+PEM_FOOTER = "-----END CERTIFICATE-----"
 
 def mastercard_signed_xml_response(func):
     """Decorator to map request to standard pattern inserting data into response data
@@ -56,22 +59,32 @@ def get_valid_signed_data_elements(binary_xml, root_cert, cert_subject_name):
     return assertion_data_elements
 
 
+def add_pem_header(bare_base64_cert):
+    if bare_base64_cert.startswith(PEM_HEADER):
+        return bare_base64_cert
+    return PEM_HEADER + "\n" + textwrap.fill(bare_base64_cert, 64) + "\n" + PEM_FOOTER
+
 def azure_read(file):
     blob_service = BlockBlobService(
         account_name=settings.AZURE_ACCOUNT_NAME,
         account_key=settings.AZURE_ACCOUNT_KEY
     )
     azure_path = settings.AZURE_CERTIFICATE_FOLDER.split('/', 1)
+    blob_name = f"{azure_path[1]}/{file}"
+    if blob_name[0] == '/':
+        blob_name = blob_name[1:]
     blob = blob_service.get_blob_to_text(
         azure_path[0],
-        f"{azure_path[1]}/{file}",
+        blob_name
     )
-    return blob
+    return blob.content
 
 
 def get_certificate_details():
-    pem_signing_cert = azure_read('mc_pem_cecrt')
-    pem_cert_name = azure_read('mc_pem_cert')
+    pem_signing_cert = azure_read(settings.MASTERCARD_SIGNING_CERTIFICATE_AZURE_BLOB_NAME)
+    signing_cert = load_certificate(FILETYPE_PEM, add_pem_header(pem_signing_cert))
+    pem_cert_name = signing_cert.get_subject().commonName
+
     return pem_signing_cert, pem_cert_name
 
 
@@ -123,6 +136,12 @@ def mastercard_request(xml_data):
     except etree.ParseError as e:
         return response_xml, mc_data, f'XML Parse Error: {e}', 400
     except (TypeError, IndexError, KeyError, AttributeError, ValueError, InvalidInput) as e:
+        import sys
+        import os
+        exc_type, exc_obj, exc_tb = sys.exc_info(1)
+        fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+        print(exc_type, fname, exc_tb.tb_lineno)
+        print('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), type(e).__name__, e)
         return response_xml, mc_data, f'Error {e}', 400
     except (InvalidCertificate, InvalidSignature, InvalidDigest) as e:
         return response_xml, mc_data, f'Error {e}', 404

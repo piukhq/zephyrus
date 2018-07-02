@@ -15,7 +15,7 @@ signxml = "*"
 voluptuous = "*"
 maya = "*"
 python-jose-cryptodome = "*"
-azure = "*"
+azure-storage-blob = "*"
 
 [dev-packages]
 pytest = "*"

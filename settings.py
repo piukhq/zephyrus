@@ -1,5 +1,8 @@
 from environment import env_var, read_env
+import os
 
+APP_DIR = os.path.abspath(os.path.dirname(__file__))
+os.chdir(APP_DIR)
 read_env()
 
 DEV_HOST = env_var('DEV_HOST', '0.0.0.0')
@@ -24,9 +27,10 @@ CLIENT_INFO_STORAGE_TIMEOUT = env_var('CLIENT_INFO_STORAGE_TIMEOUT', 60)
 
 SIGNATURE_SECRET = env_var('SIGNATURE_SECRET', 'EL411REgqoW8q-Z8ncZ0m88bkxL9CQfRHT4sSHOJ0RE')
 
-MASTERCARD_TRANSACTION_SIGNING_CERTIFICATE = None
-MASTERCARD_CERTIFICATE_COMMON_NAME = ""
+MASTERCARD_SIGNING_CERTIFICATE_AZURE_BLOB_NAME = "mc_perm_cert"
+MASTERCARD_CERTIFICATE_AZURE_COMMON_NAME_BLOB_NAME = "mc_cert_name"
 
 AZURE_ACCOUNT_NAME = env_var('ZEPHYRUS_AZURE_ACCOUNT_NAME', 'bink')
-AZURE_ACCOUNT_KEY = env_var('ZEPHYRUS_AZURE_ACCOUNT_KEY', )
-AZURE_CERTIFICATE_FOLDER= env_var('ZEPHYRUS_AZURE_CONTAINER', 'dev-media/zephyrus/transaction/certificates/mastercard')
+AZURE_ACCOUNT_KEY = env_var('ZEPHYRUS_AZURE_ACCOUNT_KEY', '')
+AZURE_CERTIFICATE_FOLDER = env_var('ZEPHYRUS_AZURE_CONTAINER', 'dev-media/zephyrus/certificates/mastercard')
+
