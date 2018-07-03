@@ -3,7 +3,6 @@ from OpenSSL.crypto import load_certificate, FILETYPE_PEM
 from flask import request
 import textwrap
 from app.errors import CustomException
-from datetime import datetime
 from azure.storage.blob import BlockBlobService
 import settings
 import lxml.etree as etree
