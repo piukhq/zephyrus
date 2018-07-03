@@ -13,8 +13,9 @@ flask-redis = "*"
 lxml = "*"
 signxml = "*"
 voluptuous = "*"
-maya = "*"
 python-jose-cryptodome = "*"
+arrow = "*"
+raven = {extras = ["flask"]}
 azure-storage-blob = "*"
 
 [dev-packages]

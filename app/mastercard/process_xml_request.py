@@ -7,6 +7,7 @@ from datetime import datetime
 from azure.storage.blob import BlockBlobService
 import settings
 import lxml.etree as etree
+import arrow
 
 PEM_HEADER = "-----BEGIN CERTIFICATE-----"
 PEM_FOOTER = "-----END CERTIFICATE-----"
@@ -116,15 +117,10 @@ def mastercard_request(xml_data):
                    for element in valid_data_elements if element.tag in conversion_map}
 
         mc_data['currency_code'] = 'GBP'
-        auth_time = datetime(
-            year=int(mc_data['mc_date'][4:]),
-            month=int(mc_data['mc_date'][:2]),
-            day=int(mc_data['mc_date'][2:4]),
-            hour=int(mc_data['mc_time'][:2]),
-            minute=int(mc_data['mc_time'][2:4]),
-            second=int(mc_data['mc_time'][4:])
-        )
-        mc_data['time'] = auth_time.isoformat()
+
+        time_obj = arrow.get(mc_data['mc_time'] + mc_data['mc_date'], "HHmmssMMDDYYYY")
+        mc_data['time'] = time_obj.format("YYYY-MM-DD HH:mm:ss")
+
         del(mc_data['mc_date'])
         del(mc_data['mc_time'])
 
