@@ -1,8 +1,6 @@
 from environment import env_var, read_env
 import os
 
-APP_DIR = os.path.abspath(os.path.dirname(__file__))
-os.chdir(APP_DIR)
 read_env()
 
 DEV_HOST = env_var('DEV_HOST', '0.0.0.0')
@@ -27,10 +25,10 @@ CLIENT_INFO_STORAGE_TIMEOUT = env_var('CLIENT_INFO_STORAGE_TIMEOUT', 60)
 
 SIGNATURE_SECRET = env_var('SIGNATURE_SECRET', 'EL411REgqoW8q-Z8ncZ0m88bkxL9CQfRHT4sSHOJ0RE')
 
-MASTERCARD_SIGNING_CERTIFICATE_AZURE_BLOB_NAME = "mastercard/mc_perm_cert"
-
-AZURE_ACCOUNT_NAME = env_var('ZEPHYRUS_AZURE_ACCOUNT_NAME', 'bink')
-AZURE_ACCOUNT_KEY = env_var('ZEPHYRUS_AZURE_ACCOUNT_KEY', '')
-AZURE_CERTIFICATE_FOLDER = env_var('ZEPHYRUS_CERTIFICATE_CONTAINER', 'dev-media/zephyrus/certificates')
+AZURE_ACCOUNT_NAME = env_var('AZURE_ACCOUNT_NAME', 'bink')
+AZURE_ACCOUNT_KEY = env_var('AZURE_ACCOUNT_KEY')
+AZURE_CONTAINER = env_var('AZURE_CONTAINER', 'dev-media')
+AZURE_CERTIFICATE_FOLDER = env_var('AZURE_CERTIFICATE_FOLDER', 'zephyrus/certificates/')
+MASTERCARD_CERTIFICATE_BLOB_NAME = env_var('MASTERCARD_CERTIFICATE_BLOB_NAME', 'mc_perm_cert')
 
 SENTRY_DSN = env_var('SENTRY_DSN')

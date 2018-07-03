@@ -22,13 +22,14 @@ Microservice to process auth transactions.
   This should run the server in development mode with Debug set to True.
   
 - Install on azure the Mastercard Signing certificate (required to use auth transaction messages from mastercard)
-  - A signing certificate in pem format should be uploaded to the "Azure_certificates_path'/mastercard/mc_pem_cert 
+  - A signing certificate in pem format should be uploaded to the defined location 
   
-  - Example of dev-media location 'dev-media/zephyrus/certificates/mastercard/mc_pem_cert.
+  - The default for dev-media container is 'zephyrus/certificates/mc_pem_cert.
   
-  The signing certificate used my mastercard, together with their master key was used to create the certificate contained
-   in each mastercard signed XML message. Only the signing certificate is required to verify the certificate and signature
-   of each message.
+  The signing certificate and a master key is used by MasterCard to create the certificate contained in each 
+  signed XML message from them.  We require only the signing certificate to verify the certificate and signature
+  in each message.
+  
   A valid signing certificate should look like this:
   
 ~~~~
@@ -70,10 +71,14 @@ Microservice to process auth transactions.
   - String Value, URL for Hermes
 - `CLIENT_INFO_STORAGE_TIMEOUT`
   - Integer Value, Minimum number of minutes before redis cache should be updated by hermes
-- `ZEPHYRUS_AZURE_ACCOUNT_NAME`
-  - Azure Account Name 
-- `ZEPHYRUS_AZURE_ACCOUNT_KEY` 
-  - Azure account key
-- `ZEPHYRUS_CERTIFICATE_CONTAINER`
-  - The container name/path to certificates eg 'dev-media/zephyrus/certificates' master card certificate will then need to be uploaded to ../mastercard/mc_perm_cert
-  
+- `AZURE_ACCOUNT_NAME`
+  - Azure Account Name defaults to "bink"
+- `AZURE_ACCOUNT_KEY` 
+  - Azure account key must be set in environment
+- `AZURE_CONTAINER`
+  - The container name defaults to "dev-media"
+- `AZURE_CERTIFICATE_FOLDER`  
+  - The path to certificates defaults to "zephyrus/certificates/"
+  - This is the first part of the Azure path which when combined with the MASTERCARD_CERTIFICATE_BLOB_NAME provides the full path to the location the certificate must be uploaded.
+- `MASTERCARD_CERTIFICATE_BLOB_NAME`
+  - The file name or end part of path specific to Mastercard defaults to "mc_perm_cert"

@@ -53,17 +53,39 @@ def remove_from_xml_string(xml_string, start_string, end_string):
         return ""
 
 
-def get_valid_signed_data_elements(binary_xml, root_cert, cert_subject_name):
-    assertion_data_elements = XMLVerifier().verify(binary_xml,
-                                                   x509_cert=root_cert,
-                                                   cert_subject_name=cert_subject_name).signed_xml
-    return assertion_data_elements
-
-
 def add_pem_header(bare_base64_cert):
+    """ This mimics a similar function in signXML.  We use the same method as signXML to get the certificate
+    subject name see get get_valid_signed_data_elements
+
+    :param bare_base64_cert:
+    :return: Certificate pre and post fixed with PEM headers if not already present (allows for the certificate
+     to have these headers missing as allowed by signXML)
+    """
     if bare_base64_cert.startswith(PEM_HEADER):
         return bare_base64_cert
     return PEM_HEADER + "\n" + textwrap.fill(bare_base64_cert, 64) + "\n" + PEM_FOOTER
+
+
+def get_valid_signed_data_elements(binary_xml, pem_signing_cert):
+    """Get validated and signed data.  This protects against forged XML which can pass unsigned data.
+
+    signXML implements a best practice which requires us to supply the common name so that the certificate
+    can be trusted.  Typically, this might be known shared knowledge such as domain name.  However,
+    in our case the certificate will be passed from MasterCard, can be trusted and is handled securely. Also the
+    common name might be changed by MasterCard and is not defined in their specification.  Therefore, the best option
+    would be to extract the common name from the certificate using the same methods as signXML which will ensure that
+    this alone will not cause a failure.  Hence the use of load_certificate and add_pem_header.
+
+    :param binary_xml:
+    :param pem_signing_cert:
+    :return: Validated Signed data - any unsigned data will be removed for security
+    """
+    signing_cert = load_certificate(FILETYPE_PEM, add_pem_header(pem_signing_cert))
+    cert_subject_name = signing_cert.get_subject().commonName
+    assertion_data_elements = XMLVerifier().verify(binary_xml,
+                                                   x509_cert=pem_signing_cert,
+                                                   cert_subject_name=cert_subject_name).signed_xml
+    return assertion_data_elements
 
 
 def azure_read_cert(file):
@@ -71,23 +93,16 @@ def azure_read_cert(file):
         account_name=settings.AZURE_ACCOUNT_NAME,
         account_key=settings.AZURE_ACCOUNT_KEY
     )
-    azure_path = settings.AZURE_CERTIFICATE_FOLDER.split('/', 1)
-    blob_name = f"{azure_path[1]}/{file}"
-    if blob_name[0] == '/':
-        blob_name = blob_name[1:]
     blob = blob_service.get_blob_to_text(
-        azure_path[0],
-        blob_name
+        settings.AZURE_CONTAINER,
+        f'{settings.AZURE_CERTIFICATE_FOLDER}{settings.MASTERCARD_CERTIFICATE_BLOB_NAME}'
     )
     return blob.content
 
 
 def mastercard_request(xml_data):
     mc_data = {}
-    pem_signing_cert = azure_read_cert(settings.MASTERCARD_SIGNING_CERTIFICATE_AZURE_BLOB_NAME)
-    signing_cert = load_certificate(FILETYPE_PEM, add_pem_header(pem_signing_cert))
-    pem_cert_name = signing_cert.get_subject().commonName
-
+    pem_signing_cert = azure_read_cert(settings.MASTERCARD_CERTIFICATE_BLOB_NAME)
     response_xml = ""
     try:
         # To ensure we always return an identical format we can remove the signature from the document
@@ -96,9 +111,7 @@ def mastercard_request(xml_data):
 
         xml_doc = etree.fromstring(xml_data)
         xml_tree_root = etree.ElementTree(xml_doc)
-        valid_data_elements = get_valid_signed_data_elements(xml_tree_root,
-                                                             pem_signing_cert,
-                                                             pem_cert_name)
+        valid_data_elements = get_valid_signed_data_elements(xml_tree_root, pem_signing_cert)
 
         # need for hermes 'time', 'amount', 'mid', 'third_party_id', 'auth_code', 'currency_code', 'payment_card_token'
         # map mastercard tags to bink hermes naming convention then tidy up bespoke discrepancies such as time

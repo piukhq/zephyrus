@@ -304,14 +304,9 @@ def azure_write(file, text):
         account_name=settings.AZURE_ACCOUNT_NAME,
         account_key=settings.AZURE_ACCOUNT_KEY
     )
-    azure_path = settings.AZURE_CERTIFICATE_FOLDER.split('/', 1)
-    blob_name = f"{azure_path[1]}/{file}"
-    if blob_name[0] == '/':
-        blob_name = blob_name[1:]
     blob_service.create_blob_from_text(
-        azure_path[0],
-        blob_name,
+        settings.AZURE_CONTAINER,
+        f'{settings.AZURE_CERTIFICATE_FOLDER}{settings.MASTERCARD_CERTIFICATE_BLOB_NAME}',
         text,
         content_settings=ContentSettings(content_type="application/text")
-
     )

@@ -22,9 +22,9 @@ class TestSelfSignedCertificateOnAzure(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        settings.MASTERCARD_SIGNING_CERTIFICATE_AZURE_BLOB_NAME = "mastercard_test/test_self_sign_perm_cert"
+        settings.MASTERCARD_CERTIFICATE_BLOB_NAME = "integration_test/mc_self_sign_cert"
         cls.cert = Certificate()
-        azure_write(settings.MASTERCARD_SIGNING_CERTIFICATE_AZURE_BLOB_NAME, cls.cert.root_pem_certificate)
+        azure_write(settings.MASTERCARD_CERTIFICATE_BLOB_NAME, cls.cert.root_pem_certificate)
 
     def setUp(self):
         pass

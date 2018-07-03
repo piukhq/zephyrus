@@ -196,9 +196,7 @@ class MasterCardAuthTestCases(TestCase):
         )
         root_generated_signed_xml = cert.sign(trans.xml_tree)
         generated_signed_xml = etree.tostring(root_generated_signed_xml)
-        # print(generated_signed_xml.decode('utf8'))
-        valid_data_elements = get_valid_signed_data_elements(generated_signed_xml,
-                                                             cert.root_pem_certificate, cert.common_name)
+        valid_data_elements = get_valid_signed_data_elements(generated_signed_xml, cert.root_pem_certificate)
         count = 0
         for element in valid_data_elements:
             if element.tag in trans.tags_list:
