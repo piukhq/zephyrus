@@ -1,5 +1,4 @@
 from environment import env_var, read_env
-import os
 
 read_env()
 
