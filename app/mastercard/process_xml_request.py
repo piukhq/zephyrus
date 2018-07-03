@@ -11,6 +11,7 @@ import lxml.etree as etree
 PEM_HEADER = "-----BEGIN CERTIFICATE-----"
 PEM_FOOTER = "-----END CERTIFICATE-----"
 
+
 def mastercard_signed_xml_response(func):
     """Decorator to map request to standard pattern inserting data into response data
     and replying in standard error format for mastercard
@@ -64,7 +65,8 @@ def add_pem_header(bare_base64_cert):
         return bare_base64_cert
     return PEM_HEADER + "\n" + textwrap.fill(bare_base64_cert, 64) + "\n" + PEM_FOOTER
 
-def azure_read(file):
+
+def azure_read_cert(file):
     blob_service = BlockBlobService(
         account_name=settings.AZURE_ACCOUNT_NAME,
         account_key=settings.AZURE_ACCOUNT_KEY
@@ -80,17 +82,12 @@ def azure_read(file):
     return blob.content
 
 
-def get_certificate_details():
-    pem_signing_cert = azure_read(settings.MASTERCARD_SIGNING_CERTIFICATE_AZURE_BLOB_NAME)
+def mastercard_request(xml_data):
+    mc_data = {}
+    pem_signing_cert = azure_read_cert(settings.MASTERCARD_SIGNING_CERTIFICATE_AZURE_BLOB_NAME)
     signing_cert = load_certificate(FILETYPE_PEM, add_pem_header(pem_signing_cert))
     pem_cert_name = signing_cert.get_subject().commonName
 
-    return pem_signing_cert, pem_cert_name
-
-
-def mastercard_request(xml_data):
-    mc_data = {}
-    signing_certificate_chain, certificate_common_name = get_certificate_details()
     response_xml = ""
     try:
         # To ensure we always return an identical format we can remove the signature from the document
@@ -100,8 +97,8 @@ def mastercard_request(xml_data):
         xml_doc = etree.fromstring(xml_data)
         xml_tree_root = etree.ElementTree(xml_doc)
         valid_data_elements = get_valid_signed_data_elements(xml_tree_root,
-                                                             signing_certificate_chain,
-                                                             certificate_common_name)
+                                                             pem_signing_cert,
+                                                             pem_cert_name)
 
         # need for hermes 'time', 'amount', 'mid', 'third_party_id', 'auth_code', 'currency_code', 'payment_card_token'
         # map mastercard tags to bink hermes naming convention then tidy up bespoke discrepancies such as time
@@ -136,12 +133,6 @@ def mastercard_request(xml_data):
     except etree.ParseError as e:
         return response_xml, mc_data, f'XML Parse Error: {e}', 400
     except (TypeError, IndexError, KeyError, AttributeError, ValueError, InvalidInput) as e:
-        import sys
-        import os
-        exc_type, exc_obj, exc_tb = sys.exc_info(1)
-        fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-        print(exc_type, fname, exc_tb.tb_lineno)
-        print('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), type(e).__name__, e)
         return response_xml, mc_data, f'Error {e}', 400
     except (InvalidCertificate, InvalidSignature, InvalidDigest) as e:
         return response_xml, mc_data, f'Error {e}', 404
