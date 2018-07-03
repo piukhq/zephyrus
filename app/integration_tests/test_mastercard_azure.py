@@ -8,7 +8,9 @@ import settings
 
 
 class TestSelfSignedCertificateOnAzure(TestCase):
-    """ Warning may over-right real certificate if test names are used
+    """ Warning only use for integration testing with Azure
+    The test will add a test certificate to mastercard_test area so
+    will not over write any manually installed certificates
 
     """
 
