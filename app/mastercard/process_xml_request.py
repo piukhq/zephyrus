@@ -1,15 +1,12 @@
 from signxml import XMLVerifier, InvalidCertificate, InvalidSignature, InvalidDigest, InvalidInput
+from signxml.util import add_pem_header
 from OpenSSL.crypto import load_certificate, FILETYPE_PEM
 from flask import request
-import textwrap
 from app.errors import CustomException
 from azure.storage.blob import BlockBlobService
 import settings
 import lxml.etree as etree
 import arrow
-
-PEM_HEADER = "-----BEGIN CERTIFICATE-----"
-PEM_FOOTER = "-----END CERTIFICATE-----"
 
 
 def mastercard_signed_xml_response(func):
@@ -53,19 +50,6 @@ def remove_from_xml_string(xml_string, start_string, end_string):
         return ""
 
 
-def add_pem_header(bare_base64_cert):
-    """ This mimics a similar function in signXML.  We use the same method as signXML to get the certificate
-    subject name see get get_valid_signed_data_elements
-
-    :param bare_base64_cert:
-    :return: Certificate pre and post fixed with PEM headers if not already present (allows for the certificate
-     to have these headers missing as allowed by signXML)
-    """
-    if bare_base64_cert.startswith(PEM_HEADER):
-        return bare_base64_cert
-    return PEM_HEADER + "\n" + textwrap.fill(bare_base64_cert, 64) + "\n" + PEM_FOOTER
-
-
 def get_valid_signed_data_elements(binary_xml, pem_signing_cert):
     """Get validated and signed data.  This protects against forged XML which can pass unsigned data.
 
@@ -95,7 +79,7 @@ def azure_read_cert(file):
     )
     blob = blob_service.get_blob_to_text(
         settings.AZURE_CONTAINER,
-        f'{settings.AZURE_CERTIFICATE_FOLDER}{settings.MASTERCARD_CERTIFICATE_BLOB_NAME}'
+        f"{settings.AZURE_CERTIFICATE_FOLDER.strip('/')}/{settings.MASTERCARD_CERTIFICATE_BLOB_NAME.strip('/')}"
     )
     return blob.content
 

@@ -306,7 +306,7 @@ def azure_write(file, text):
     )
     blob_service.create_blob_from_text(
         settings.AZURE_CONTAINER,
-        f'{settings.AZURE_CERTIFICATE_FOLDER}{settings.MASTERCARD_CERTIFICATE_BLOB_NAME}',
+        f"{settings.AZURE_CERTIFICATE_FOLDER.strip('/')}/{settings.MASTERCARD_CERTIFICATE_BLOB_NAME.strip('/')}",
         text,
         content_settings=ContentSettings(content_type="application/text")
     )
