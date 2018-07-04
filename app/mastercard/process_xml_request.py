@@ -72,7 +72,7 @@ def get_valid_signed_data_elements(binary_xml, pem_signing_cert):
     return assertion_data_elements
 
 
-def azure_read_cert(file):
+def azure_read_cert():
     blob_service = BlockBlobService(
         account_name=settings.AZURE_ACCOUNT_NAME,
         account_key=settings.AZURE_ACCOUNT_KEY
@@ -86,7 +86,7 @@ def azure_read_cert(file):
 
 def mastercard_request(xml_data):
     mc_data = {}
-    pem_signing_cert = azure_read_cert(settings.MASTERCARD_CERTIFICATE_BLOB_NAME)
+    pem_signing_cert = azure_read_cert()
     response_xml = ""
     try:
         # To ensure we always return an identical format we can remove the signature from the document
