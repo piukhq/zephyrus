@@ -1,7 +1,10 @@
-from settings import MASTERCARD_TRANSACTION_SIGNING_CERTIFICATE, MASTERCARD_CERTIFICATE_COMMON_NAME
 from signxml import XMLVerifier, InvalidCertificate, InvalidSignature, InvalidDigest, InvalidInput
+from signxml.util import add_pem_header
+from OpenSSL.crypto import load_certificate, FILETYPE_PEM
 from flask import request
 from app.errors import CustomException
+from azure.storage.blob import BlockBlobService
+import settings
 import lxml.etree as etree
 import arrow
 
@@ -47,20 +50,43 @@ def remove_from_xml_string(xml_string, start_string, end_string):
         return ""
 
 
-def get_valid_signed_data_elements(binary_xml, root_cert, cert_subject_name):
+def get_valid_signed_data_elements(binary_xml, pem_signing_cert):
+    """Get validated and signed data.  This protects against forged XML which can pass unsigned data.
+
+    signXML implements a best practice which requires us to supply the common name so that the certificate
+    can be trusted.  Typically, this might be known shared knowledge such as domain name.  However,
+    in our case the certificate will be passed from MasterCard, can be trusted and is handled securely. Also the
+    common name might be changed by MasterCard and is not defined in their specification.  Therefore, the best option
+    would be to extract the common name from the certificate using the same methods as signXML which will ensure that
+    this alone will not cause a failure.  Hence the use of load_certificate and add_pem_header.
+
+    :param binary_xml:
+    :param pem_signing_cert:
+    :return: Validated Signed data - any unsigned data will be removed for security
+    """
+    signing_cert = load_certificate(FILETYPE_PEM, add_pem_header(pem_signing_cert))
+    cert_subject_name = signing_cert.get_subject().commonName
     assertion_data_elements = XMLVerifier().verify(binary_xml,
-                                                   x509_cert=root_cert,
+                                                   x509_cert=pem_signing_cert,
                                                    cert_subject_name=cert_subject_name).signed_xml
     return assertion_data_elements
 
 
-def get_certificate_details():
-    return MASTERCARD_TRANSACTION_SIGNING_CERTIFICATE, MASTERCARD_CERTIFICATE_COMMON_NAME
+def azure_read_cert():
+    blob_service = BlockBlobService(
+        account_name=settings.AZURE_ACCOUNT_NAME,
+        account_key=settings.AZURE_ACCOUNT_KEY
+    )
+    blob = blob_service.get_blob_to_text(
+        settings.AZURE_CONTAINER,
+        f"{settings.AZURE_CERTIFICATE_FOLDER.strip('/')}/{settings.MASTERCARD_CERTIFICATE_BLOB_NAME.strip('/')}"
+    )
+    return blob.content
 
 
 def mastercard_request(xml_data):
     mc_data = {}
-    signing_certificate_chain, certificate_common_name = get_certificate_details()
+    pem_signing_cert = azure_read_cert()
     response_xml = ""
     try:
         # To ensure we always return an identical format we can remove the signature from the document
@@ -69,9 +95,7 @@ def mastercard_request(xml_data):
 
         xml_doc = etree.fromstring(xml_data)
         xml_tree_root = etree.ElementTree(xml_doc)
-        valid_data_elements = get_valid_signed_data_elements(xml_tree_root,
-                                                             signing_certificate_chain,
-                                                             certificate_common_name)
+        valid_data_elements = get_valid_signed_data_elements(xml_tree_root, pem_signing_cert)
 
         # need for hermes 'time', 'amount', 'mid', 'third_party_id', 'auth_code', 'currency_code', 'payment_card_token'
         # map mastercard tags to bink hermes naming convention then tidy up bespoke discrepancies such as time
