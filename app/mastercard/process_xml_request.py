@@ -2,6 +2,8 @@ from signxml import XMLVerifier, InvalidCertificate, InvalidSignature, InvalidDi
 from signxml.util import add_pem_header
 from OpenSSL.crypto import load_certificate, FILETYPE_PEM
 from flask import request
+
+from app import sentry
 from app.errors import CustomException
 from azure.storage.blob import BlockBlobService
 import settings
@@ -25,12 +27,14 @@ def mastercard_signed_xml_response(func):
                 # might need in future to set and return message = "Data processing error" but currently not used
 
         except CustomException as e:
+            sentry.handle_exception(e)
             if e.name == "CONNECTION_ERROR":
                 code = e.code
             # error code returned by XML processing should be used unless 200
             elif code == 200:
                 code = 400
-        except BaseException:
+        except BaseException as e:
+            sentry.handle_exception(e)
             code = 500
         return xml, code
 
@@ -123,8 +127,11 @@ def mastercard_request(xml_data):
         return response_xml, mc_data, None, 200
 
     except etree.ParseError as e:
+        sentry.handle_exception(e)
         return response_xml, mc_data, f'XML Parse Error: {e}', 400
     except (TypeError, IndexError, KeyError, AttributeError, ValueError, InvalidInput) as e:
+        sentry.handle_exception(e)
         return response_xml, mc_data, f'Error {e}', 400
     except (InvalidCertificate, InvalidSignature, InvalidDigest) as e:
-        return response_xml, mc_data, f'Error {e}', 404
+        sentry.handle_exception(e)
+        return response_xml, mc_data, f'Error {e}', 403
