@@ -4,7 +4,7 @@ import voluptuous
 from flask import request
 from flask_restplus import Resource
 from app.mastercard.process_xml_request import mastercard_signed_xml_response
-from app import CustomException
+from app import CustomException, sentry
 from app.utils import save_transaction
 from app.authentication.token_utils import jwt_auth
 from app.errors import INVALID_DATA_FORMAT
@@ -54,6 +54,7 @@ class MasterCard(Resource):
         try:
             schema.auth_transaction(transaction)
         except voluptuous.error.Invalid as e:
+            sentry.handle_exception(e)
             raise CustomException(INVALID_DATA_FORMAT, e) from e
 
         transaction['amount'] = int(Decimal(transaction['amount']) * 100)  # conversion to pence

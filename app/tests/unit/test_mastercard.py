@@ -50,7 +50,7 @@ class MasterCardAuthTestCases(TestCase):
                 mock_certificate.return_value = cert.root_pem_certificate
                 resp = self.client.post(self.mastercard_endpoint, data=signed_xml.xml, content_type="text/xml")
         self.assertTrue(valid_transaction_xml(resp.json), "Invalid XML response")
-        self.assert404(resp)
+        self.assert403(resp)
 
     def test_invalid_transaction_response_no_amount_in_xml(self):
         xml_obj = UnsignedXML(MockMastercardAuthTransaction())
@@ -65,7 +65,7 @@ class MasterCardAuthTestCases(TestCase):
                 mock_certificate.return_value = cert.root_pem_certificate
                 resp = self.client.post(self.mastercard_endpoint, data=signed_xml.xml, content_type="text/xml")
         self.assertTrue(valid_transaction_xml(resp.json), "Invalid XML response")
-        self.assert404(resp)
+        self.assert403(resp)
 
     def test_valid_transaction_response_when_hermes_fails(self):
         signed_xml = SignedXML(MockMastercardAuthTransaction(), signing_cert=self.cert)
@@ -100,7 +100,7 @@ class MasterCardAuthTestCases(TestCase):
             mock_certificate.return_value = cert.root_pem_certificate
             resp = self.client.post(self.mastercard_endpoint, data=tampered_xml.encode('utf8'), content_type="text/xml")
         self.assertTrue(valid_transaction_xml(resp.json), "Invalid XML response")
-        self.assert404(resp)
+        self.assert403(resp)
 
     def test_xml_mastercard_processing(self):
         signed_xml = SignedXML(MockMastercardAuthTransaction(), signing_cert=self.cert)
@@ -159,7 +159,7 @@ class MasterCardAuthTestCases(TestCase):
             return_xml, mc_data, message, code = mastercard_request(tampered_xml.encode('utf8'))
         self.assertEqual(mc_data, {})
         self.assertEquals(message, "Error Digest mismatch for reference 0")
-        self.assertEquals(code, 404)
+        self.assertEquals(code, 403)
 
     def test_xml_mastercard_processing_wrong_certificate(self):
         signed_xml = SignedXML(MockMastercardAuthTransaction(trans_amt="0.45"), signing_cert=self.cert)
@@ -168,7 +168,7 @@ class MasterCardAuthTestCases(TestCase):
             mock_certificate.return_value = cert.root_pem_certificate
             return_xml, mc_data, message, code = mastercard_request(signed_xml.xml)
         self.assertIn("Signature verification", message)
-        self.assertEquals(code, 404)
+        self.assertEquals(code, 403)
         self.assertEqual(mc_data, {})
 
     def test_get_valid_signed_data_elements(self):
