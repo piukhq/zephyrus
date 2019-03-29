@@ -1,7 +1,7 @@
 from flask_restplus import Api
 
 from app.authentication.token_utils import Auth, Me
-from app.views import Amex, MasterCard, HealthCheck
+from app.views import Amex, MasterCard, HealthCheck, Visa
 
 api = Api()
 
@@ -13,3 +13,4 @@ api.add_resource(Me, '/me', endpoint='api.me')
 
 api.add_resource(Amex, '/auth_transactions/amex', endpoint='api.amex')
 api.add_resource(MasterCard, '/auth_transactions/mastercard', endpoint='api.mastercard')
+api.add_resource(Visa, '/auth_transactions/visa', endpoint='api.visa')

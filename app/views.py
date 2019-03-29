@@ -3,12 +3,13 @@ from decimal import Decimal
 import voluptuous
 from flask import request
 from flask_restplus import Resource
-from app.mastercard.process_xml_request import mastercard_signed_xml_response
+
 from app import CustomException, sentry
-from app.utils import save_transaction
+from app import schema
 from app.authentication.token_utils import jwt_auth
 from app.errors import INVALID_DATA_FORMAT
-from app import schema
+from app.mastercard.process_xml_request import mastercard_signed_xml_response
+from app.utils import save_transaction
 
 
 class HealthCheck(Resource):
@@ -60,3 +61,15 @@ class MasterCard(Resource):
         transaction['amount'] = int(Decimal(transaction['amount']) * 100)  # conversion to pence
         save_transaction(transaction)
         return {'success': True}
+
+
+class Visa(Resource):
+
+    def post(self):
+        try:
+            data = schema.visa_auth_transaction(request.json)
+        except voluptuous.error.Invalid as e:
+            sentry.handle_exception(e)
+            raise CustomException(INVALID_DATA_FORMAT, e) from e
+
+        return data
