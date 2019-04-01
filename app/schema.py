@@ -1,4 +1,4 @@
-from voluptuous import Schema, Required, Optional
+from voluptuous import Schema, Required, Optional, Invalid
 
 client_info = Schema({
     Required('organisation'): str,
@@ -18,19 +18,22 @@ auth_transaction = Schema({
     Required('currency_code'): str,
 })
 
-visa_optional_transaction = Schema({
-    Optional('PanLastFour'): str,
-    Optional('VisaMerchantId'): str,
-    Optional('VisaMerchantName'): str,
-    Optional('VisaStoreId'): str,
-    Optional('VisaStoreName'): str,
-    Optional('TimeStampYYMMDD'): str,
-    Optional('TransactionAmount'): str,
-})
 
-visa_optional_offer = Schema({
-    Optional('OfferId'): str,
-})
+def allowed_elements_visa(key):
+    valid_keys = (
+        'Transaction.PanLastFour',
+        'Transaction.VisaMerchantId',
+        'Transaction.VisaMerchantName',
+        'Transaction.VisaStoreId',
+        'Transaction.VisaStoreName',
+        'Transaction.TimeStampYYMMDD',
+        'Transaction.TransactionAmount',
+        'Offer.OfferId'
+    )
+    if key not in valid_keys:
+        raise Invalid(f"{key} is an invalid key.")
+    return key
+
 
 visa_auth_transaction = Schema({
     Required('CardId'): str,
@@ -38,7 +41,12 @@ visa_auth_transaction = Schema({
     Required('MessageId'): str,
     Required('MessageName'): str,
     Required('UserProfileId'): str,
-    Optional('Transaction'): visa_optional_transaction,
-    Optional('Offer'): visa_optional_offer,
-    Optional('UserDefinedFieldsCollection'): str,
+    Optional('MessageElementsCollection'): Schema([{
+        Optional('Key'): allowed_elements_visa,
+        Optional('Value'): str
+    }]),
+    Optional('UserDefinedFieldsCollection'): Schema([{
+        Optional('Key'): str,
+        Optional('Value'): str
+    }]),
 })
