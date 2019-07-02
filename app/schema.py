@@ -27,7 +27,7 @@ def allowed_elements_visa(key):
         'Transaction.VisaStoreId',
         'Transaction.VisaStoreName',
         'Transaction.TimeStampYYMMDD',
-        'Transaction.TransactionAmount',
+        'Transaction.ClearingAmount',
         'Offer.OfferId'
     )
     if key not in valid_keys:

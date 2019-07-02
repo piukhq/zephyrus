@@ -7,6 +7,10 @@ DEV_PORT = env_var('DEV_PORT', '5000')
 
 HERMES_URL = env_var('HERMES_URL', 'http://127.0.0.1:8000')
 SERVICE_API_KEY = env_var('SERVICE_API_KEY', 'F616CE5C88744DD52DB628FAD8B3D')
+VISA_CREDENTIALS = {
+    'username': env_var('VISA_USERNAME'),
+    'password': env_var('VISA_PASSWORD')
+}
 
 REDIS_PASSWORD = env_var('REDIS_PASSWORD', '')
 REDIS_HOST = env_var('REDIS_HOST', 'localhost')

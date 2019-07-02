@@ -4,12 +4,11 @@ import voluptuous
 from flask import request
 from flask_restplus import Resource
 
-from app import CustomException, sentry
-from app import schema
-from app.authentication.token_utils import jwt_auth
+from app import CustomException, sentry, schema
+from app.authentication.token_utils import jwt_auth, visa_auth
 from app.errors import INVALID_DATA_FORMAT
 from app.mastercard.process_xml_request import mastercard_signed_xml_response
-from app.utils import save_transaction
+from app.utils import save_transaction, format_visa_transaction
 
 
 class HealthCheck(Resource):
@@ -65,11 +64,14 @@ class MasterCard(Resource):
 
 class Visa(Resource):
 
+    @visa_auth
     def post(self):
         try:
             data = schema.visa_auth_transaction(request.json)
-        except voluptuous.error.Invalid as e:
+            formatted_transaction = format_visa_transaction(data)
+        except (voluptuous.error.Invalid, KeyError) as e:
             sentry.handle_exception(e)
-            raise CustomException(INVALID_DATA_FORMAT, e) from e
+            return {'status_code': 100, 'error_msg': e.error_message}
 
-        return data
+        save_transaction(formatted_transaction)
+        return {'error_msg': '', 'status_code': '0'}

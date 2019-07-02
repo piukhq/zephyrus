@@ -1,7 +1,7 @@
 from functools import wraps
 
-import jose.jwt
 import arrow
+import jose.jwt
 from flask import request, jsonify, make_response, g
 from flask_restplus import Resource
 
@@ -70,6 +70,7 @@ def jwt_auth(f):
             raise AuthException(CLIENT_DOES_NOT_EXIST)
 
         return f(*args, **kwargs)
+
     return check_auth
 
 
@@ -112,3 +113,18 @@ class Me(Resource):
     @jwt_auth
     def get(self):
         return make_response(jsonify({'identity': g.client['organisation']}))
+
+
+def _check_visa_auth(username: str, password: str) -> bool:
+    return username == settings.VISA_CREDENTIALS['username'] and password == settings.VISA_CREDENTIALS['password']
+
+
+def visa_auth(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        auth = request.authorization
+        if not auth or not _check_visa_auth(auth.username, auth.password):
+            raise AuthException(INVALID_AUTH_TOKEN)
+        return f(*args, **kwargs)
+
+    return decorated
