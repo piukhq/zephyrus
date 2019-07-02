@@ -8,7 +8,8 @@ from flask_restplus import Resource
 import settings
 from app.clients import ClientInfo
 from app.errors import INVALID_CLIENT_SECRET, AuthException, MISSING_PARAMS, CustomException, MISSING_AUTH, \
-    INVALID_AUTH_FORMAT, INVALID_AUTH_TYPE, INVALID_AUTH_TOKEN, AUTH_EXPIRED, CLIENT_DOES_NOT_EXIST
+    INVALID_AUTH_FORMAT, INVALID_AUTH_TYPE, INVALID_AUTH_TOKEN, AUTH_EXPIRED, CLIENT_DOES_NOT_EXIST, \
+    INVALID_AUTH_SETTINGS
 
 
 def get_params(*params):
@@ -116,6 +117,9 @@ class Me(Resource):
 
 
 def _check_visa_auth(username: str, password: str) -> bool:
+    if not (settings.VISA_CREDENTIALS['username'] and settings.VISA_CREDENTIALS['password']):
+        raise AuthException(INVALID_AUTH_SETTINGS)
+
     return username == settings.VISA_CREDENTIALS['username'] and password == settings.VISA_CREDENTIALS['password']
 
 

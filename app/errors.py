@@ -10,6 +10,7 @@ INVALID_AUTH_TYPE = 'INVALID_AUTH_TYPE'
 INVALID_AUTH_TOKEN = 'INVALID_AUTH_TOKEN'
 AUTH_EXPIRED = 'AUTH_EXPIRED'
 INVALID_DATA_FORMAT = 'INVALID_DATA'
+INVALID_AUTH_SETTINGS = 'INVALID_AUTH_SETTINGS'
 
 
 errors = {
@@ -62,6 +63,11 @@ errors = {
         'name': 'CONNECTION_ERROR',
         'message': 'There was a problem connecting to one of our services',
         'code': 545,
+    },
+    INVALID_AUTH_SETTINGS: {
+        'name': 'INVALID_AUTH_SETTINGS',
+        'message': 'Authorisation settings have not been configured.',
+        'code': 500
     }
 }
 
