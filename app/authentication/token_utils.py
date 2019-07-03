@@ -1,9 +1,8 @@
+import base64
 from functools import wraps
 
 import arrow
 import jose.jwt
-from flask import request, jsonify, make_response, g
-from flask_restplus import Resource
 
 import settings
 from app.clients import ClientInfo
@@ -40,7 +39,7 @@ def generate_jwt(client):
 
 def jwt_auth(f):
     @wraps(f)
-    def check_auth(*args, **kwargs):
+    def check_auth(request, response, *args, **kwargs):
         try:
             auth_header = request.headers['Authorization']
         except KeyError:
@@ -75,8 +74,8 @@ def jwt_auth(f):
     return check_auth
 
 
-class Auth(Resource):
-    def post(self):
+class Auth:
+    def on_post(self, request, response):
         params, missing = get_params('client_id', 'client_secret')
 
         if missing:
@@ -103,32 +102,35 @@ class Auth(Resource):
             raise AuthException(INVALID_CLIENT_SECRET)
 
         # if match, generate and return token/api key, else return error
-        response = jsonify({
+        response.media = {
             'api_key': generate_jwt(client)
-        })
-
-        return make_response(response)
+        }
 
 
-class Me(Resource):
+class Me:
     @jwt_auth
-    def get(self):
-        return make_response(jsonify({'identity': g.client['organisation']}))
+    def get(self, request, response):
+        response.media = {'identity': g.client['organisation']}
 
 
-def _check_visa_auth(username: str, password: str) -> bool:
+def _check_visa_auth(token: str) -> bool:
     if not (settings.VISA_CREDENTIALS['username'] and settings.VISA_CREDENTIALS['password']):
         raise AuthException(INVALID_AUTH_SETTINGS)
 
+    username, password = base64.b64decode(token).decode('utf-8').split(':')
     return username == settings.VISA_CREDENTIALS['username'] and password == settings.VISA_CREDENTIALS['password']
 
 
 def visa_auth(f):
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        auth = request.authorization
-        if not auth or not _check_visa_auth(auth.username, auth.password):
+    def decorated(request, response):
+        try:
+            auth_type, token = request.auth.split(' ')
+        except (AttributeError, ValueError):
             raise AuthException(INVALID_AUTH_TOKEN)
-        return f(*args, **kwargs)
+
+        if auth_type.lower() != 'basic' or not _check_visa_auth(token):
+            raise AuthException(INVALID_AUTH_TOKEN)
+
+        return f(f, request, response)
 
     return decorated

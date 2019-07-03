@@ -3,8 +3,7 @@ from decimal import Decimal
 import requests
 
 import settings
-from app import CustomException
-from app.errors import CONNECTION_ERROR
+from app.errors import CONNECTION_ERROR, CustomException
 
 
 def save_transaction(transaction):

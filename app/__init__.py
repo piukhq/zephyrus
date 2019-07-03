@@ -1,37 +1,30 @@
-import logging
-
-from flask import Flask
-from flask_redis import FlaskRedis
-from raven.contrib.flask import Sentry
+import falcon
+import sentry_sdk
+from sentry_sdk.integrations.falcon import FalconIntegration
 
 import settings
+from app import urls
 from app.errors import CustomException
 from app.version import __version__
 
-redis_store = FlaskRedis()
-sentry = Sentry()
+
+def handle_custom_exception(error):
+    response = error.to_dict()
+    return response, error.code
 
 
-def create_app(config_name='settings'):
-    from app.urls import api
-    app = Flask(__name__)
-
-    app.config.from_object(config_name)
+def create_api():
+    api = falcon.API()
 
     if settings.SENTRY_DSN:
-        sentry.init_app(
-            app,
+        sentry_sdk.init(
             dsn=settings.SENTRY_DSN,
-            logging=True,
-            level=logging.ERROR)
-        sentry.client.release = __version__
+            integrations=[FalconIntegration()],
+        )
 
-    api.init_app(app)
-    redis_store.init_app(app)
+    api.add_error_handler(CustomException, handle_custom_exception)
 
-    @api.errorhandler(CustomException)
-    def handle_custom_exception(error):
-        response = error.to_dict()
-        return response, error.code
+    for url in urls.urlpatterns:
+        api.add_route(**url._asdict())
 
-    return app
+    return api

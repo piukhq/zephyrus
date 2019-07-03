@@ -6,9 +6,11 @@ import requests
 import voluptuous
 
 import settings
-from app import redis_store, schema
+from app import schema
 from app.errors import CONNECTION_ERROR, CustomException, CLIENT_DOES_NOT_EXIST
 from settings import HERMES_URL, SERVICE_API_KEY
+
+redis_store = redis.Redis(settings.REDIS_URL)
 
 
 class ClientInfo:
