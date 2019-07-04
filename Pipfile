@@ -19,6 +19,3 @@ sentry-sdk = {extras = ["falcon"],version = "*"}
 [dev-packages]
 pytest = "*"
 pytest-cov = "*"
-
-[requires]
-python_version = "3.7"
