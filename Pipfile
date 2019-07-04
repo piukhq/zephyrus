@@ -4,7 +4,6 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-zephyrus = {editable = true,path = "."}
 python-dotenv = "*"
 requests = "*"
 lxml = "*"
