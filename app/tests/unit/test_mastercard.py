@@ -4,7 +4,7 @@ import falcon
 import lxml.etree as etree
 from falcon.testing import TestCase
 
-from app import create_api
+from app import create_app
 from app.mastercard.process_xml_request import mastercard_request, get_valid_signed_data_elements
 from app.tests.test_helpers.signed_xml import Certificate, SignedXML, MockMastercardAuthTransaction, \
     valid_transaction_xml, UnsignedXML
@@ -28,7 +28,7 @@ class MasterCardAuthTestCases(TestCase):
 
     def setUp(self):
         super(MasterCardAuthTestCases, self).setUp()
-        self.app = create_api()
+        self.app = create_app()
 
     def test_valid_transaction_response(self):
         signed_xml = SignedXML(MockMastercardAuthTransaction(), signing_cert=self.cert)

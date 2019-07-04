@@ -2,9 +2,9 @@ import os
 import sys
 
 import settings
-from app import create_api
+from app import create_app
 
-api = create_api()
+app = create_app()
 
 if __name__ == "__main__":
     try:
@@ -18,7 +18,7 @@ if __name__ == "__main__":
     werkzeug.serving.run_simple(
         hostname=settings.DEV_HOST,
         port=settings.DEV_PORT,
-        application=api,
+        application=app,
         use_reloader=not in_debugger,
         use_debugger=True,
     )

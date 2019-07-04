@@ -4,7 +4,7 @@ import jose.jwt
 from falcon.testing import TestCase
 
 import settings
-from app import create_api
+from app import create_app
 from app.api import CustomException
 from app.authentication.token_utils import generate_jwt
 from app.clients import ClientInfo
@@ -30,7 +30,7 @@ class TestJwtAuth(TestCase):
 
     def setUp(self):
         super(TestJwtAuth, self).setUp()
-        self.app = create_api()
+        self.app = create_app()
 
     @mock.patch('app.authentication.token_utils.generate_jwt', autospec=True)
     @mock.patch('app.authentication.token_utils.ClientInfo', autospec=True)

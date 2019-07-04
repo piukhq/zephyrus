@@ -22,7 +22,7 @@ def handle_custom_exception(error: CustomException, req: falcon.Request, resp: f
     resp.status = error.code
 
 
-def create_api() -> falcon.API:
+def create_app() -> falcon.API:
     api = falcon.API()
 
     if settings.SENTRY_DSN:

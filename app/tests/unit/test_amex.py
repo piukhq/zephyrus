@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 import requests
 from falcon.testing import TestCase
 
-from app import create_api
+from app import create_app
 from app.clients import ClientInfo
 
 
@@ -26,7 +26,7 @@ class TestAmex(TestCase):
 
     def setUp(self):
         super(TestAmex, self).setUp()
-        self.app = create_api()
+        self.app = create_app()
 
     @mock.patch('requests.post')
     def test_process_auth_transaction_success(self, mock_request, mock_decode, mock_get_client):

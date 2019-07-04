@@ -5,7 +5,7 @@ from unittest import mock
 from falcon.testing import TestCase
 
 import settings
-from app import create_api
+from app import create_app
 
 
 class TestVisa(TestCase):
@@ -68,7 +68,7 @@ class TestVisa(TestCase):
         valid_credentials = base64.b64encode(b'user@bink.test:Password1').decode('utf-8')
         self.headers = {'Authorization': f'basic {valid_credentials}'}
         super(TestVisa, self).setUp()
-        self.app = create_api()
+        self.app = create_app()
 
     def tearDown(self):
         settings.VISA_CREDENTIALS = self.VISA_CREDENTIALS_HOLD
