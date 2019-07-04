@@ -14,9 +14,6 @@ class MastercardXMLHandler(JSONHandler):
         return stream.read()
 
     def serialize(self, media, content_type):
-        if 'json' in content_type:
-            return super(MastercardXMLHandler, self).serialize(media, content_type)
-
         return media
 
 

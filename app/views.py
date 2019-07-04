@@ -60,8 +60,7 @@ class MasterCard:
         else:
             transaction['amount'] = int(Decimal(transaction['amount']) * 100)  # conversion to pence
             save_transaction(transaction)
-            # resp.content_type = 'application/json'
-            resp.media = {'success': True}
+            return {'success': True}
 
 
 class Visa:

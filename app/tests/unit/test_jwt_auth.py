@@ -4,7 +4,8 @@ import jose.jwt
 from falcon.testing import TestCase
 
 import settings
-from app import create_api, CustomException
+from app import create_api
+from app.api import CustomException
 from app.authentication.token_utils import generate_jwt
 from app.clients import ClientInfo
 from app.errors import CLIENT_DOES_NOT_EXIST
