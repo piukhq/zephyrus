@@ -1,8 +1,8 @@
 import base64
-from functools import wraps
+import binascii
+from typing import TYPE_CHECKING
 
 import arrow
-import binascii
 import jose.jwt
 
 import settings
@@ -11,13 +11,16 @@ from app.errors import INVALID_CLIENT_SECRET, AuthException, MISSING_PARAMS, Cus
     INVALID_AUTH_FORMAT, INVALID_AUTH_TYPE, INVALID_AUTH_TOKEN, AUTH_EXPIRED, CLIENT_DOES_NOT_EXIST, \
     INVALID_AUTH_SETTINGS
 
+if TYPE_CHECKING:
+    import falcon
 
-def get_params(request, *params):
+
+def get_params(req: 'falcon.Request', *params):
     values = []
     missing = []
     for param in params:
         try:
-            value = request.media[param]
+            value = req.media[param]
         except (KeyError, TypeError):
             missing.append(param)
         else:
@@ -39,11 +42,9 @@ def generate_jwt(client):
 
 
 def jwt_auth(f):
-    @wraps(f)
-    def check_auth(request, response, *args, **kwargs):
-        try:
-            auth_header = request.headers['Authorization']
-        except KeyError:
+    def check_auth(req: 'falcon.Request', resp: 'falcon.Response', *args, **kwargs):
+        auth_header = req.auth
+        if not auth_header:
             raise AuthException(MISSING_AUTH)
 
         try:
@@ -66,18 +67,19 @@ def jwt_auth(f):
             raise AuthException(INVALID_AUTH_TOKEN) from e
 
         try:
-            request.context.client = ClientInfo.get_client(claims['sub'])
+            req.context.client = ClientInfo.get_client(claims['sub'])
         except CustomException:
             raise AuthException(CLIENT_DOES_NOT_EXIST)
 
-        return f(f, request, response, *args, **kwargs)
+        return f(f, req, resp, *args, **kwargs)
 
     return check_auth
 
 
 class Auth:
-    def on_post(self, request, response):
-        params, missing = get_params(request, 'client_id', 'client_secret')
+    @staticmethod
+    def on_post(req: 'falcon.Request', resp: 'falcon.Response'):
+        params, missing = get_params(req, 'client_id', 'client_secret')
 
         if missing:
             raise AuthException(MISSING_PARAMS, missing)
@@ -103,15 +105,15 @@ class Auth:
             raise AuthException(INVALID_CLIENT_SECRET)
 
         # if match, generate and return token/api key, else return error
-        response.media = {
+        resp.media = {
             'api_key': generate_jwt(client)
         }
 
 
 class Me:
     @jwt_auth
-    def get(self, request, response):
-        response.media = {'identity': request.context.client['organisation']}
+    def on_get(self, req: 'falcon.Request', resp: 'falcon.Response'):
+        resp.media = {'identity': req.context.client['organisation']}
 
 
 def _check_visa_auth(token: str) -> bool:
@@ -126,15 +128,15 @@ def _check_visa_auth(token: str) -> bool:
 
 
 def visa_auth(f):
-    def decorated(request, response):
+    def decorated(req: 'falcon.Request', resp: 'falcon.Response'):
         try:
-            auth_type, token = request.auth.split(' ')
+            auth_type, token = req.auth.split(' ')
         except (AttributeError, ValueError):
             raise AuthException(INVALID_AUTH_TOKEN)
 
         if auth_type.lower() != 'basic' or not _check_visa_auth(token):
             raise AuthException(INVALID_AUTH_TOKEN)
 
-        return f(f, request, response)
+        return f(f, req, resp)
 
     return decorated

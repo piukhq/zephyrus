@@ -1,4 +1,5 @@
 from decimal import Decimal
+from typing import TYPE_CHECKING
 
 import sentry_sdk
 import voluptuous
@@ -9,9 +10,6 @@ from app.authentication.token_utils import jwt_auth, visa_auth
 from app.errors import CustomException, INVALID_DATA_FORMAT
 from app.mastercard.process_xml_request import mastercard_signed_xml_response
 from app.utils import save_transaction, format_visa_transaction
-
-
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     import falcon
@@ -62,6 +60,7 @@ class MasterCard:
         else:
             transaction['amount'] = int(Decimal(transaction['amount']) * 100)  # conversion to pence
             save_transaction(transaction)
+            # resp.content_type = 'application/json'
             resp.media = {'success': True}
 
 
