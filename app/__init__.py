@@ -8,12 +8,12 @@ from app.errors import CustomException
 from app.version import __version__
 
 
-def handle_custom_exception(error):
-    response = error.to_dict()
-    return response, error.code
+def handle_custom_exception(error: CustomException, req: falcon.Request, resp: falcon.Response, *params) -> None:
+    resp.media = error.to_dict()
+    resp.status = error.code
 
 
-def create_api():
+def create_api() -> falcon.API:
     api = falcon.API()
 
     if settings.SENTRY_DSN:

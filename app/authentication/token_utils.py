@@ -2,6 +2,7 @@ import base64
 from functools import wraps
 
 import arrow
+import binascii
 import jose.jwt
 
 import settings
@@ -116,8 +117,11 @@ class Me:
 def _check_visa_auth(token: str) -> bool:
     if not (settings.VISA_CREDENTIALS['username'] and settings.VISA_CREDENTIALS['password']):
         raise AuthException(INVALID_AUTH_SETTINGS)
+    try:
+        username, password = base64.b64decode(token).decode('utf-8').split(':')
+    except (binascii.Error, ValueError):
+        return False
 
-    username, password = base64.b64decode(token).decode('utf-8').split(':')
     return username == settings.VISA_CREDENTIALS['username'] and password == settings.VISA_CREDENTIALS['password']
 
 

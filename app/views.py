@@ -3,6 +3,7 @@ from decimal import Decimal
 import sentry_sdk
 import voluptuous
 
+import settings
 from app import schema
 from app.authentication.token_utils import jwt_auth, visa_auth
 from app.errors import CustomException, INVALID_DATA_FORMAT
@@ -55,7 +56,8 @@ class MasterCard:
         try:
             schema.auth_transaction(transaction)
         except voluptuous.error.Invalid as e:
-            sentry_sdk.capture_exception(e)
+            if settings.SENTRY_DSN:
+                sentry_sdk.capture_exception(e)
             raise CustomException(INVALID_DATA_FORMAT, e) from e
         else:
             transaction['amount'] = int(Decimal(transaction['amount']) * 100)  # conversion to pence
@@ -71,7 +73,8 @@ class Visa:
             data = schema.visa_auth_transaction(req.media)
             formatted_transaction = format_visa_transaction(data)
         except (voluptuous.error.Invalid, KeyError) as e:
-            sentry_sdk.capture_exception(e)
+            if settings.SENTRY_DSN:
+                sentry_sdk.capture_exception(e)
             resp.media = {'status_code': 100, 'error_msg': e.error_message}
         else:
             save_transaction(formatted_transaction)

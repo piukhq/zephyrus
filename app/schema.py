@@ -19,7 +19,7 @@ auth_transaction = Schema({
 })
 
 
-def allowed_elements_visa(key):
+def allowed_elements_visa(key: str) -> str:
     valid_keys = (
         'Transaction.PanLastFour',
         'Transaction.VisaMerchantId',
