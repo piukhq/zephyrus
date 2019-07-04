@@ -11,12 +11,12 @@ from app.errors import INVALID_CLIENT_SECRET, AuthException, MISSING_PARAMS, Cus
     INVALID_AUTH_SETTINGS
 
 
-def get_params(*params):
+def get_params(request, *params):
     values = []
     missing = []
     for param in params:
         try:
-            value = request.json[param]
+            value = request.media[param]
         except (KeyError, TypeError):
             missing.append(param)
         else:
@@ -65,18 +65,18 @@ def jwt_auth(f):
             raise AuthException(INVALID_AUTH_TOKEN) from e
 
         try:
-            g.client = ClientInfo.get_client(claims['sub'])
+            request.context.client = ClientInfo.get_client(claims['sub'])
         except CustomException:
             raise AuthException(CLIENT_DOES_NOT_EXIST)
 
-        return f(*args, **kwargs)
+        return f(f, request, response, *args, **kwargs)
 
     return check_auth
 
 
 class Auth:
     def on_post(self, request, response):
-        params, missing = get_params('client_id', 'client_secret')
+        params, missing = get_params(request, 'client_id', 'client_secret')
 
         if missing:
             raise AuthException(MISSING_PARAMS, missing)
@@ -110,7 +110,7 @@ class Auth:
 class Me:
     @jwt_auth
     def get(self, request, response):
-        response.media = {'identity': g.client['organisation']}
+        response.media = {'identity': request.context.client['organisation']}
 
 
 def _check_visa_auth(token: str) -> bool:
