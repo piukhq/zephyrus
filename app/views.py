@@ -5,11 +5,12 @@ import sentry_sdk
 import voluptuous
 
 import settings
-from app import schema
-from app.authentication.token_utils import jwt_auth, visa_auth
+from app.authentication.token_utils import jwt_auth
 from app.errors import CustomException, INVALID_DATA_FORMAT
-from app.mastercard.process_xml_request import mastercard_signed_xml_response
-from app.utils import save_transaction, format_visa_transaction
+from app.mastercard import mastercard_signed_xml_response
+from app.schema import auth_transaction_schema
+from app.utils import save_transaction
+from app.visa import visa_auth, format_visa_transaction, visa_transaction_schema
 
 if TYPE_CHECKING:
     import falcon
@@ -37,7 +38,7 @@ class Amex:
         transaction['currency_code'] = 'GBP'
 
         try:
-            schema.auth_transaction(transaction)
+            auth_transaction_schema(transaction)
         except voluptuous.error.Invalid as e:
             raise CustomException(INVALID_DATA_FORMAT, e) from e
 
@@ -52,7 +53,7 @@ class MasterCard:
     def on_post(self, req: 'falcon.Request', resp: 'falcon.Response'):
         transaction = req.context.transaction_data
         try:
-            schema.auth_transaction(transaction)
+            auth_transaction_schema(transaction)
         except voluptuous.error.Invalid as e:
             if settings.SENTRY_DSN:
                 sentry_sdk.capture_exception(e)
@@ -68,7 +69,7 @@ class Visa:
     @visa_auth
     def on_post(self, req: 'falcon.Request', resp: 'falcon.Response'):
         try:
-            data = schema.visa_auth_transaction(req.media)
+            data = visa_transaction_schema(req.media)
             formatted_transaction = format_visa_transaction(data)
         except (voluptuous.error.Invalid, KeyError) as e:
             if settings.SENTRY_DSN:

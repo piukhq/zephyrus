@@ -1,5 +1,3 @@
-import base64
-import binascii
 from typing import TYPE_CHECKING
 
 import arrow
@@ -8,8 +6,7 @@ import jose.jwt
 import settings
 from app.clients import ClientInfo
 from app.errors import INVALID_CLIENT_SECRET, AuthException, MISSING_PARAMS, CustomException, MISSING_AUTH, \
-    INVALID_AUTH_FORMAT, INVALID_AUTH_TYPE, INVALID_AUTH_TOKEN, AUTH_EXPIRED, CLIENT_DOES_NOT_EXIST, \
-    INVALID_AUTH_SETTINGS
+    INVALID_AUTH_FORMAT, INVALID_AUTH_TYPE, INVALID_AUTH_TOKEN, AUTH_EXPIRED, CLIENT_DOES_NOT_EXIST
 
 if TYPE_CHECKING:
     import falcon
@@ -114,29 +111,3 @@ class Me:
     @jwt_auth
     def on_get(self, req: 'falcon.Request', resp: 'falcon.Response'):
         resp.media = {'identity': req.context.client['organisation']}
-
-
-def _check_visa_auth(token: str) -> bool:
-    if not (settings.VISA_CREDENTIALS['username'] and settings.VISA_CREDENTIALS['password']):
-        raise AuthException(INVALID_AUTH_SETTINGS)
-    try:
-        username, password = base64.b64decode(token).decode('utf-8').split(':')
-    except (binascii.Error, ValueError):
-        return False
-
-    return username == settings.VISA_CREDENTIALS['username'] and password == settings.VISA_CREDENTIALS['password']
-
-
-def visa_auth(f):
-    def decorated(req: 'falcon.Request', resp: 'falcon.Response'):
-        try:
-            auth_type, token = req.auth.split(' ')
-        except (AttributeError, ValueError):
-            raise AuthException(INVALID_AUTH_TOKEN)
-
-        if auth_type.lower() != 'basic' or not _check_visa_auth(token):
-            raise AuthException(INVALID_AUTH_TOKEN)
-
-        return f(f, req, resp)
-
-    return decorated
