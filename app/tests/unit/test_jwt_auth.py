@@ -6,7 +6,7 @@ from falcon.testing import TestCase
 import settings
 from app import create_app
 from app.api import CustomException
-from app.amex.utils import generate_jwt
+from app.amex import generate_jwt
 from app.clients import ClientInfo
 from app.errors import CLIENT_DOES_NOT_EXIST
 
@@ -32,8 +32,8 @@ class TestJwtAuth(TestCase):
         super(TestJwtAuth, self).setUp()
         self.app = create_app()
 
-    @mock.patch('app.authentication.token_utils.generate_jwt', autospec=True)
-    @mock.patch('app.authentication.token_utils.ClientInfo', autospec=True)
+    @mock.patch('app.amex.views.generate_jwt', autospec=True)
+    @mock.patch('app.amex.views.ClientInfo', autospec=True)
     def test_auth_endpoint_success(self, mock_client_info, mock_gen_jwt):
         mock_client_info.return_value.data = None
         mock_client_info.return_value.get_client.return_value = {
@@ -46,8 +46,8 @@ class TestJwtAuth(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.json['api_key'], 'really_bad_jwt')
 
-    @mock.patch('app.authentication.token_utils.generate_jwt', autospec=True)
-    @mock.patch('app.authentication.token_utils.ClientInfo', autospec=True)
+    @mock.patch('app.amex.views.generate_jwt', autospec=True)
+    @mock.patch('app.amex.views.ClientInfo', autospec=True)
     def test_auth_success_with_refreshed_client_apps_info(self, mock_client_info, mock_gen_jwt):
         mock_client_info.return_value.data = [
             {'client_id': 'extra', 'secret': 'extra'},
@@ -66,8 +66,8 @@ class TestJwtAuth(TestCase):
         self.assertEqual(resp.status_code, 400)
         self.assertEqual(resp.json['name'], 'MISSING_PARAMS')
 
-    @mock.patch('app.authentication.token_utils.generate_jwt', autospec=True)
-    @mock.patch('app.authentication.token_utils.ClientInfo', autospec=True)
+    @mock.patch('app.amex.views.generate_jwt', autospec=True)
+    @mock.patch('app.amex.views.ClientInfo', autospec=True)
     def test_auth_endpoint_fails_invalid_client(self, mock_client_info, mock_gen_jwt):
         mock_client_info.return_value.data = [
             {'client_id': 'nomatch1', 'secret': 'extra'},
@@ -78,8 +78,8 @@ class TestJwtAuth(TestCase):
         self.assertEqual(resp.status_code, 401)
         self.assertEqual(resp.json['name'], 'CLIENT_DOES_NOT_EXIST')
 
-    @mock.patch('app.authentication.token_utils.generate_jwt', autospec=True)
-    @mock.patch('app.authentication.token_utils.ClientInfo', autospec=True)
+    @mock.patch('app.amex.views.generate_jwt', autospec=True)
+    @mock.patch('app.amex.views.ClientInfo', autospec=True)
     def test_auth_endpoint_fails_invalid_secret(self, mock_client_info, mock_gen_jwt):
         mock_client_info.return_value.data = [
             {'client_id': 'testid', 'secret': 'bad_secret'},
@@ -90,7 +90,7 @@ class TestJwtAuth(TestCase):
         self.assertEqual(resp.json['name'], 'INVALID_CLIENT_SECRET')
 
     @mock.patch.object(ClientInfo, 'get_client')
-    @mock.patch('app.authentication.token_utils.jose.jwt.decode', autospec=True)
+    @mock.patch('app.amex.authentication.jose.jwt.decode', autospec=True)
     def test_auth_decorator_success(self, mock_decode, mock_get_client):
         mock_get_client.return_value = self.client_obj
 
@@ -124,7 +124,7 @@ class TestJwtAuth(TestCase):
         self.assertEqual(resp.status_code, 401)
         self.assertEqual(resp.json['name'], 'INVALID_AUTH_TYPE')
 
-    @mock.patch('app.authentication.token_utils.jose.jwt.decode', autospec=True)
+    @mock.patch('app.amex.authentication.jose.jwt.decode', autospec=True)
     def test_auth_decorator_fails_expired_signature(self, mock_decode):
         mock_decode.side_effect = jose.exceptions.ExpiredSignatureError
 
@@ -136,7 +136,7 @@ class TestJwtAuth(TestCase):
         self.assertEqual(resp.status_code, 401)
         self.assertEqual(resp.json['name'], 'AUTH_EXPIRED')
 
-    @mock.patch('app.authentication.token_utils.jose.jwt.decode', autospec=True)
+    @mock.patch('app.amex.authentication.jose.jwt.decode', autospec=True)
     def test_auth_decorator_fails_invalid_signature(self, mock_decode):
         mock_decode.side_effect = jose.exceptions.JWTError
 
@@ -149,7 +149,7 @@ class TestJwtAuth(TestCase):
         self.assertEqual(resp.json['name'], 'INVALID_AUTH_TOKEN')
 
     @mock.patch.object(ClientInfo, 'get_client')
-    @mock.patch('app.authentication.token_utils.jose.jwt.decode', autospec=True)
+    @mock.patch('app.amex.authentication.jose.jwt.decode', autospec=True)
     def test_auth_decorator_fails_missing_client_info(self, mock_decode, mock_get_client):
         mock_get_client.side_effect = CustomException(CLIENT_DOES_NOT_EXIST)
 
