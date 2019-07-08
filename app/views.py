@@ -1,16 +1,4 @@
-from decimal import Decimal
 from typing import TYPE_CHECKING
-
-import sentry_sdk
-import voluptuous
-
-import settings
-from app.authentication.token_utils import jwt_auth
-from app.errors import CustomException, INVALID_DATA_FORMAT
-from app.mastercard import mastercard_signed_xml_response
-from app.schema import auth_transaction_schema
-from app.utils import save_transaction
-from app.visa import visa_auth, format_visa_transaction, visa_transaction_schema
 
 if TYPE_CHECKING:
     import falcon
@@ -19,62 +7,3 @@ if TYPE_CHECKING:
 class HealthCheck:
     def on_get(self, req: 'falcon.Request', resp: 'falcon.Response'):
         resp.media = ''
-
-
-class Amex:
-    @jwt_auth
-    def on_post(self, req: 'falcon.Request', resp: 'falcon.Response'):
-        data = req.media
-        conversion_map = {
-            'transaction_time': 'time',
-            'transaction_id': 'auth_code',
-            'transaction_amount': 'amount',
-            'cm_alias': 'payment_card_token',
-            'merchant_number': 'mid',
-            'offer_id': 'third_party_id',
-        }
-        transaction = {conversion_map[element[0]]: element[1]
-                       for element in data.items() if element[0] in conversion_map}
-        transaction['currency_code'] = 'GBP'
-
-        try:
-            auth_transaction_schema(transaction)
-        except voluptuous.error.Invalid as e:
-            raise CustomException(INVALID_DATA_FORMAT, e) from e
-
-        transaction['amount'] = int(Decimal(transaction['amount']) * 100)  # conversion to pence
-        save_transaction(transaction)
-        resp.media = {'success': True}
-
-
-class MasterCard:
-
-    @mastercard_signed_xml_response
-    def on_post(self, req: 'falcon.Request', resp: 'falcon.Response'):
-        transaction = req.context.transaction_data
-        try:
-            auth_transaction_schema(transaction)
-        except voluptuous.error.Invalid as e:
-            if settings.SENTRY_DSN:
-                sentry_sdk.capture_exception(e)
-            raise CustomException(INVALID_DATA_FORMAT, e) from e
-        else:
-            transaction['amount'] = int(Decimal(transaction['amount']) * 100)  # conversion to pence
-            save_transaction(transaction)
-            return {'success': True}
-
-
-class Visa:
-
-    @visa_auth
-    def on_post(self, req: 'falcon.Request', resp: 'falcon.Response'):
-        try:
-            data = visa_transaction_schema(req.media)
-            formatted_transaction = format_visa_transaction(data)
-        except (voluptuous.error.Invalid, KeyError) as e:
-            if settings.SENTRY_DSN:
-                sentry_sdk.capture_exception(e)
-            resp.media = {'status_code': 100, 'error_msg': e.error_message}
-        else:
-            save_transaction(formatted_transaction)
-            resp.media = {'error_msg': '', 'status_code': '0'}

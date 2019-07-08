@@ -20,7 +20,7 @@ def _check_visa_auth(token: str) -> bool:
     return username == settings.VISA_CREDENTIALS['username'] and password == settings.VISA_CREDENTIALS['password']
 
 
-def visa_auth(f):
+def base_auth(f):
     def decorated(req: 'falcon.Request', resp: 'falcon.Response'):
         try:
             auth_type, token = req.auth.split(' ')
