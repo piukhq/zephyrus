@@ -31,3 +31,14 @@ AZURE_CERTIFICATE_FOLDER = env_var('AZURE_CERTIFICATE_FOLDER', 'zephyrus/certifi
 MASTERCARD_CERTIFICATE_BLOB_NAME = env_var('MASTERCARD_CERTIFICATE_BLOB_NAME', 'mc_perm_cert')
 
 SENTRY_DSN = env_var('SENTRY_DSN')
+
+CELERY_BROKER_URL = env_var('CELERY_BROKER_URL', 'pyamqp://guest@localhost//')
+
+
+class CeleryConf:
+    celery_broker_url = CELERY_BROKER_URL
+    celery_default_queue = 'auth-transactions'
+    celery_task_serializer = 'json'
+    celery_result_serializer = 'json'
+    celery_accept_content = ['json']
+    celery_task_routes = {'auth-transactions.save': {'queue': 'auth-transactions'}}

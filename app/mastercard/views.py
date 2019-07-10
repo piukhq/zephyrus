@@ -8,7 +8,7 @@ import settings
 from app.errors import CustomException, INVALID_DATA_FORMAT
 from app.mastercard import mastercard_signed_xml_response
 from app.schema import auth_transaction_schema
-from app.utils import save_transaction
+from app.utils import send_to_hermes, send_to_zagreus
 
 if TYPE_CHECKING:
     import falcon
@@ -27,5 +27,6 @@ class MasterCardView:
             raise CustomException(INVALID_DATA_FORMAT, e) from e
         else:
             transaction['amount'] = int(Decimal(transaction['amount']) * 100)  # conversion to pence
-            save_transaction(transaction)
+            send_to_zagreus(transaction, 'MASTERCARD')
+            send_to_hermes(transaction)
             return {'success': True}

@@ -1,10 +1,11 @@
 import requests
 
 import settings
+from app.celery import app as celery_app
 from app.errors import CONNECTION_ERROR, CustomException
 
 
-def save_transaction(transaction: dict) -> None:
+def send_to_hermes(transaction: dict) -> None:
     headers = {
         'Authorization': f'token {settings.SERVICE_API_KEY}'
     }
@@ -17,3 +18,9 @@ def save_transaction(transaction: dict) -> None:
 
     if resp.status_code != 201:
         raise CustomException(CONNECTION_ERROR)
+
+
+def send_to_zagreus(transaction: dict, provider: str, location: str = None) -> None:
+    transaction['provider'] = provider
+    transaction['location'] = location
+    celery_app.send_task('auth-transactions.save', args=[transaction, ])

@@ -23,7 +23,7 @@ def handle_custom_exception(error: CustomException, req: falcon.Request, resp: f
 
 
 def create_app() -> falcon.API:
-    api = falcon.API()
+    app = falcon.API()
 
     if settings.SENTRY_DSN:
         sentry_sdk.init(
@@ -31,8 +31,8 @@ def create_app() -> falcon.API:
             integrations=[FalconIntegration()],
         )
 
-    api.add_error_handler(CustomException, handle_custom_exception)
-    api.req_options.media_handlers = Handlers({
+    app.add_error_handler(CustomException, handle_custom_exception)
+    app.req_options.media_handlers = Handlers({
         'application/json': JSONHandler(),
         'application/json; charset=UTF-8': JSONHandler(),
         'application/xml': MastercardXMLHandler(),
@@ -40,6 +40,6 @@ def create_app() -> falcon.API:
     })
 
     for url in urls.urlpatterns:
-        api.add_route(**url._asdict())
+        app.add_route(**url._asdict())
 
-    return api
+    return app

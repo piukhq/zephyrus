@@ -8,7 +8,7 @@ from app.clients import ClientInfo
 from app.errors import AuthException, MISSING_PARAMS, CLIENT_DOES_NOT_EXIST, INVALID_CLIENT_SECRET, CustomException, \
     INVALID_DATA_FORMAT
 from app.schema import auth_transaction_schema
-from app.utils import save_transaction
+from app.utils import send_to_hermes, send_to_zagreus
 
 if TYPE_CHECKING:
     import falcon
@@ -76,5 +76,6 @@ class AmexView:
             raise CustomException(INVALID_DATA_FORMAT, e) from e
 
         transaction['amount'] = int(Decimal(transaction['amount']) * 100)  # conversion to pence
-        save_transaction(transaction)
+        send_to_zagreus(transaction, 'AMEX')
+        send_to_hermes(transaction)
         resp.media = {'success': True}
