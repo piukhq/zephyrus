@@ -20,7 +20,7 @@ def send_to_hermes(transaction: dict) -> None:
         raise CustomException(CONNECTION_ERROR)
 
 
-def send_to_zagreus(transaction: dict, provider: str, location: str = None) -> None:
+def send_to_zagreus(transaction: dict, provider: str, location: str = '') -> None:
     transaction['provider'] = provider
     transaction['location'] = location
     celery_app.send_task('auth-transactions.save', args=[transaction, ])
