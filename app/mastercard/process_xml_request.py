@@ -1,14 +1,14 @@
+import arrow
+import falcon
+import lxml.etree as etree
+import sentry_sdk
+from OpenSSL.crypto import load_certificate, FILETYPE_PEM
+from azure.storage.blob import BlockBlobService
 from signxml import XMLVerifier, InvalidCertificate, InvalidSignature, InvalidDigest, InvalidInput
 from signxml.util import add_pem_header
-from OpenSSL.crypto import load_certificate, FILETYPE_PEM
-from flask import request
 
-from app import sentry
-from app.errors import CustomException
-from azure.storage.blob import BlockBlobService
 import settings
-import lxml.etree as etree
-import arrow
+from app.errors import CustomException
 
 
 def mastercard_signed_xml_response(func):
@@ -16,27 +16,28 @@ def mastercard_signed_xml_response(func):
     and replying in standard error format for mastercard
     """
 
-    def wrapper(*args, **kwargs):
-        xml, mc_data, message, code = mastercard_request(request.data)
+    def wrapper(req: 'falcon.Request', resp: 'falcon.Response', *args, **kwargs):
+        xml, mc_data, message, code = mastercard_request(req.media)
         # message is currently not used but mastercard might in future want this in the xml reponse
         try:
-            request.transaction_data = mc_data
-            ret = func(*args, **kwargs)
-            if not ret['success'] and code == 200:
-                code = 400
+            req.context.transaction_data = mc_data
+            ret = func(func, req, resp, *args, **kwargs)
+            if not ret['success'] and code == falcon.HTTP_200:
+                code = falcon.HTTP_400
                 # might need in future to set and return message = "Data processing error" but currently not used
 
         except CustomException as e:
-            sentry.handle_exception(e)
+            sentry_sdk.capture_exception(e)
             if e.name == "CONNECTION_ERROR":
                 code = e.code
             # error code returned by XML processing should be used unless 200
-            elif code == 200:
-                code = 400
+            elif code == falcon.HTTP_200:
+                code = falcon.HTTP_400
         except BaseException as e:
-            sentry.handle_exception(e)
-            code = 500
-        return xml, code
+            sentry_sdk.capture_exception(e)
+            code = falcon.HTTP_500
+        resp.media = xml
+        resp.status = code
 
     return wrapper
 
@@ -121,17 +122,17 @@ def mastercard_request(xml_data):
         time_obj = arrow.get(mc_data['mc_time'] + mc_data['mc_date'], "HHmmssMMDDYYYY")
         mc_data['time'] = time_obj.format("YYYY-MM-DD HH:mm:ss")
 
-        del(mc_data['mc_date'])
-        del(mc_data['mc_time'])
+        del (mc_data['mc_date'])
+        del (mc_data['mc_time'])
 
-        return response_xml, mc_data, None, 200
+        return response_xml, mc_data, None, falcon.HTTP_200
 
     except etree.ParseError as e:
-        sentry.handle_exception(e)
-        return response_xml, mc_data, f'XML Parse Error: {e}', 400
+        sentry_sdk.capture_exception(e)
+        return response_xml, mc_data, f'XML Parse Error: {e}', falcon.HTTP_400
     except (TypeError, IndexError, KeyError, AttributeError, ValueError, InvalidInput) as e:
-        sentry.handle_exception(e)
-        return response_xml, mc_data, f'Error {e}', 400
+        sentry_sdk.capture_exception(e)
+        return response_xml, mc_data, f'Error {e}', falcon.HTTP_400
     except (InvalidCertificate, InvalidSignature, InvalidDigest) as e:
-        sentry.handle_exception(e)
-        return response_xml, mc_data, f'Error {e}', 403
+        sentry_sdk.capture_exception(e)
+        return response_xml, mc_data, f'Error {e}', falcon.HTTP_403

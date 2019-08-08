@@ -1,11 +1,10 @@
 import requests
 
 import settings
-from app import CustomException
-from app.errors import CONNECTION_ERROR
+from app.errors import CONNECTION_ERROR, CustomException
 
 
-def save_transaction(transaction):
+def save_transaction(transaction: dict) -> None:
     headers = {
         'Authorization': f'token {settings.SERVICE_API_KEY}'
     }

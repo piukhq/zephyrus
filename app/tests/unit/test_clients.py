@@ -4,11 +4,11 @@ from unittest.mock import MagicMock
 
 import redis
 import requests
-from flask_testing import TestCase
+from falcon.testing import TestCase
 from redis import StrictRedis
 
-from app import create_app, redis_store
-from app.clients import ClientInfo
+from app import create_app
+from app.clients import ClientInfo, redis_store
 from app.errors import CustomException
 
 
@@ -24,8 +24,9 @@ class TestClientAppInfo(TestCase):
         'organisation': 'Master Card'
     }]
 
-    def create_app(self):
-        return create_app(self, )
+    def setUp(self):
+        super(TestClientAppInfo, self).setUp()
+        self.app = create_app()
 
     @mock.patch('app.clients.redis_store.get', autospec=True)
     def test_storage_handler_catches_connection_errors(self, mock_redis_get):

@@ -2,7 +2,7 @@ from unittest import mock
 from unittest.mock import MagicMock
 
 import requests
-from flask_testing import TestCase
+from falcon.testing import TestCase
 
 from app import create_app
 from app.clients import ClientInfo
@@ -24,14 +24,15 @@ class TestAmex(TestCase):
         "offer_id": "1225"
     }
 
-    def create_app(self):
-        return create_app(self, )
+    def setUp(self):
+        super(TestAmex, self).setUp()
+        self.app = create_app()
 
     @mock.patch('requests.post')
     def test_process_auth_transaction_success(self, mock_request, mock_decode, mock_get_client):
         mock_request.return_value.status_code = 201
 
-        resp = self.client.post(self.amex_endpoint, json=self.payload, headers=self.headers)
+        resp = self.simulate_post(self.amex_endpoint, json=self.payload, headers=self.headers)
 
         self.assertTrue(mock_decode.called)
         self.assertTrue(mock_get_client.called)
@@ -46,7 +47,7 @@ class TestAmex(TestCase):
             "offer_id": "1225"
         }
 
-        resp = self.client.post(self.amex_endpoint, json=payload, headers=self.headers)
+        resp = self.simulate_post(self.amex_endpoint, json=payload, headers=self.headers)
         self.assertTrue(mock_decode.called)
         self.assertTrue(mock_get_client.called)
         self.assertEqual(resp.status_code, 400)
@@ -55,7 +56,7 @@ class TestAmex(TestCase):
     @mock.patch('requests.post')
     def test_error_connecting_to_hermes_raises_exception(self, mock_request, mock_decode, mock_get_client):
         mock_request.side_effect = requests.ConnectionError
-        resp = self.client.post(self.amex_endpoint, json=self.payload, headers=self.headers)
+        resp = self.simulate_post(self.amex_endpoint, json=self.payload, headers=self.headers)
 
         self.assertTrue(mock_decode.called)
         self.assertTrue(mock_get_client.called)
@@ -68,7 +69,7 @@ class TestAmex(TestCase):
         hermes_resp.status_code = 400
         mock_request.return_value = hermes_resp
 
-        resp = self.client.post(self.amex_endpoint, json=self.payload, headers=self.headers)
+        resp = self.simulate_post(self.amex_endpoint, json=self.payload, headers=self.headers)
 
         self.assertTrue(mock_decode.called)
         self.assertTrue(mock_get_client.called)

@@ -1,15 +1,17 @@
-from flask_restplus import Api
+from collections import namedtuple
 
-from app.authentication.token_utils import Auth, Me
-from app.views import Amex, MasterCard, HealthCheck
+from app.amex import AmexAuthView, AmexMeView, AmexView
+from app.mastercard import MasterCardView
+from app.views import HealthCheck
+from app.visa import VisaView
 
-api = Api()
+url = namedtuple("url", ["uri_template", "resource"])
 
-api.add_resource(HealthCheck, '/healthz', endpoint='api.healthz')
-
-api.add_resource(Auth, '/auth_transactions/authorize', endpoint='api.authorize')
-api.add_resource(Me, '/me', endpoint='api.me')
-
-
-api.add_resource(Amex, '/auth_transactions/amex', endpoint='api.amex')
-api.add_resource(MasterCard, '/auth_transactions/mastercard', endpoint='api.mastercard')
+urlpatterns = [
+    url('/healthz', HealthCheck),
+    url('/auth_transactions/authorize', AmexAuthView),
+    url('/me', AmexMeView),
+    url('/auth_transactions/amex', AmexView),
+    url('/auth_transactions/mastercard', MasterCardView),
+    url('/auth_transactions/visa', VisaView)
+]

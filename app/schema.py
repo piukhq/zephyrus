@@ -8,7 +8,7 @@ client_info = Schema({
 
 client_info_list = Schema([client_info])
 
-auth_transaction = Schema({
+auth_transaction_schema = Schema({
     Required('time'): str,
     Optional('auth_code'): str,
     Required('amount'): str,
