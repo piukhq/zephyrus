@@ -8,7 +8,7 @@ from app import urls
 from app.errors import CustomException
 
 
-class MastercardXMLHandler(JSONHandler):
+class RawXMLHandler(JSONHandler):
 
     def deserialize(self, stream, content_type, content_length):
         return stream.read()
@@ -35,8 +35,8 @@ def create_app() -> falcon.API:
     app.req_options.media_handlers = Handlers({
         'application/json': JSONHandler(),
         'application/json; charset=UTF-8': JSONHandler(),
-        'application/xml': MastercardXMLHandler(),
-        'text/xml': MastercardXMLHandler()
+        'application/xml': RawXMLHandler(),
+        'text/xml': RawXMLHandler()
     })
 
     for url in urls.urlpatterns:

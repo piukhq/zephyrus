@@ -21,6 +21,3 @@ celery = "*"
 pytest = "*"
 pytest-cov = "*"
 werkzeug = "*"
-
-[requires]
-python_version = "3.6"
