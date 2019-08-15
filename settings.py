@@ -33,7 +33,8 @@ MASTERCARD_CERTIFICATE_BLOB_NAME = env_var('MASTERCARD_CERTIFICATE_BLOB_NAME', '
 SENTRY_DSN = env_var('SENTRY_DSN')
 
 CELERY_QUEUE = env_var('CELERY_QUEUE', 'auth-transactions')
-CELERY_BROKER_URI = 'pyamqp://{username}:{password}@{host}:{port}//'.format(
+CELERY_BROKER_URI = '{protocol}://{username}:{password}@{host}:{port}//'.format(
+    protocol=env_var('CELERY_BROKER_PROTOCOL', 'pyamqp'),
     username=env_var('CELERY_BROKER_USERNAME', 'guest'),
     password=env_var('CELERY_BROKER_PASSWORD', 'guest'),
     host=env_var('CELERY_BROKER_HOST', 'localhost'),
