@@ -32,13 +32,19 @@ MASTERCARD_CERTIFICATE_BLOB_NAME = env_var('MASTERCARD_CERTIFICATE_BLOB_NAME', '
 
 SENTRY_DSN = env_var('SENTRY_DSN')
 
-CELERY_BROKER_URL = env_var('CELERY_BROKER_URL', 'pyamqp://guest@localhost//')
+CELERY_QUEUE = env_var('CELERY_QUEUE', 'auth-transactions')
+CELERY_BROKER_URI = 'pyamqp://{username}:{password}@{host}:{port}//'.format(
+    username=env_var('CELERY_BROKER_USERNAME', 'guest'),
+    password=env_var('CELERY_BROKER_PASSWORD', 'guest'),
+    host=env_var('CELERY_BROKER_HOST', 'localhost'),
+    port=env_var('CELERY_BROKER_PORT', '5672')
+)
 
 
 class CeleryConf:
-    celery_broker_url = CELERY_BROKER_URL
-    celery_default_queue = 'auth-transactions'
+    celery_broker_url = CELERY_BROKER_URI
+    celery_default_queue = CELERY_QUEUE
     celery_task_serializer = 'json'
     celery_result_serializer = 'json'
     celery_accept_content = ['json']
-    celery_task_routes = {'auth-transactions.save': {'queue': 'auth-transactions'}}
+    celery_task_routes = {f'{CELERY_QUEUE}.save': {'queue': CELERY_QUEUE}}
