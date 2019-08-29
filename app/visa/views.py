@@ -4,7 +4,7 @@ import sentry_sdk
 import voluptuous
 
 import settings
-from app.utils import save_transaction
+from app.utils import send_to_zagreus
 from app.visa import base_auth, visa_transaction_schema, format_visa_transaction
 
 if TYPE_CHECKING:
@@ -23,5 +23,5 @@ class VisaView:
                 sentry_sdk.capture_exception(e)
             resp.media = {'status_code': 100, 'error_msg': e.error_message}
         else:
-            save_transaction(formatted_transaction)
+            send_to_zagreus(formatted_transaction, 'VISA')
             resp.media = {'error_msg': '', 'status_code': '0'}

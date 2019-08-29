@@ -8,6 +8,7 @@ import settings
 from app import create_app
 
 
+@mock.patch('app.visa.views.send_to_zagreus')
 class TestVisa(TestCase):
     TESTING = True
     VISA_CREDENTIALS_HOLD = None
@@ -74,24 +75,20 @@ class TestVisa(TestCase):
         settings.VISA_CREDENTIALS = self.VISA_CREDENTIALS_HOLD
         super(TestVisa, self).tearDown()
 
-    def test_valid_auth_credentials(self):
+    def test_valid_auth_credentials(self, _):
         resp = self.simulate_post('/auth_transactions/visa', headers=self.headers)
         self.assertEqual(resp.status_code, 200)
 
-    def test_wrong_auth_credentials(self):
+    def test_wrong_auth_credentials(self, _):
         headers = {'Authorization': 'basic wrong_data'}
         resp = self.simulate_post('/auth_transactions/visa', headers=headers)
         self.assertEqual(resp.status_code, 401)
 
-    @mock.patch('requests.post')
-    def test_successful_call(self, mock_request):
-        mock_request.return_value.status_code = 201
-
+    def test_successful_call(self, _):
         resp = self.simulate_post(self.visa_endpoint, json=self.payload, headers=self.headers)
         self.assertEqual(resp.status_code, 200)
-        self.assertTrue(mock_request.called)
 
-    def test_payload_extra_key(self):
+    def test_payload_extra_key(self, _):
         payload = {
             'WrongKey': 'InvalidPayload',
             **self.payload
@@ -102,7 +99,7 @@ class TestVisa(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.json, expected_result)
 
-    def test_payload_wrong_data(self):
+    def test_payload_wrong_data(self, _):
         payload = copy(self.payload)
         del payload['MessageElementsCollection']
         payload['MessageElementsCollection'] = [
