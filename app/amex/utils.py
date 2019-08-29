@@ -1,15 +1,11 @@
-from typing import TYPE_CHECKING
-
+import falcon
 import arrow
 import jose.jwt
 
 import settings
 
-if TYPE_CHECKING:
-    import falcon
 
-
-def get_params(req: "falcon.Request", *params):
+def get_params(req: falcon.Request, *params):
     values = []
     missing = []
     for param in params:
@@ -25,7 +21,7 @@ def get_params(req: "falcon.Request", *params):
 def generate_jwt(client):
     time_now = arrow.now()
     claims = {
-        "exp": time_now.replace(minutes=5).timestamp,
+        "exp": time_now.shift(minutes=+5).timestamp,
         "nbf": time_now.timestamp,
         "iss": "bink",
         "aud": "https://api.bink.com",
