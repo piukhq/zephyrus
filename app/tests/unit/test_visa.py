@@ -1,5 +1,4 @@
 import base64
-from copy import copy
 from unittest import mock
 
 from falcon.testing import TestCase
@@ -8,7 +7,7 @@ import settings
 from app import create_app
 
 
-@mock.patch("app.visa.views.send_to_zagreus")
+@mock.patch("app.queue.add")
 class TestVisa(TestCase):
     TESTING = True
     VISA_CREDENTIALS_HOLD = None
@@ -58,21 +57,3 @@ class TestVisa(TestCase):
     def test_successful_call(self, _):
         resp = self.simulate_post(self.visa_endpoint, json=self.payload, headers=self.headers)
         self.assertEqual(resp.status_code, 200)
-
-    def test_payload_extra_key(self, _):
-        payload = {"WrongKey": "InvalidPayload", **self.payload}
-        expected_result = {"status_code": 100, "error_msg": "extra keys not allowed"}
-
-        resp = self.simulate_post(self.visa_endpoint, json=payload, headers=self.headers)
-        self.assertEqual(resp.status_code, 200)
-        self.assertEqual(resp.json, expected_result)
-
-    def test_payload_wrong_data(self, _):
-        payload = copy(self.payload)
-        del payload["MessageElementsCollection"]
-        payload["MessageElementsCollection"] = [{"Key": "Transaction.WrongKey", "Value": "11.80"}]
-        expected_result = {"status_code": 100, "error_msg": "Transaction.WrongKey is an invalid key."}
-
-        resp = self.simulate_post(self.visa_endpoint, json=payload, headers=self.headers)
-        self.assertEqual(resp.status_code, 200)
-        self.assertEqual(resp.json, expected_result)

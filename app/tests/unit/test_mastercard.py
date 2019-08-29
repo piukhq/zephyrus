@@ -15,7 +15,7 @@ from app.tests.test_helpers.signed_xml import (
 )
 
 
-@patch("app.mastercard.views.send_to_zagreus")
+@patch("app.queue.add")
 class MasterCardAuthTestCases(TestCase):
     TESTING = True
     mastercard_endpoint = "/auth_transactions/mastercard"
