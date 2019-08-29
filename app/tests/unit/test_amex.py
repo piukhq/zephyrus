@@ -6,13 +6,13 @@ from app import create_app
 from app.clients import ClientInfo
 
 
-@mock.patch.object(ClientInfo, 'get_client')
-@mock.patch('jose.jwt.decode')
-@mock.patch('app.amex.views.send_to_zagreus')
+@mock.patch.object(ClientInfo, "get_client")
+@mock.patch("jose.jwt.decode")
+@mock.patch("app.amex.views.send_to_zagreus")
 class TestAmex(TestCase):
     TESTING = True
-    headers = {'Authorization': 'token wwed'}
-    amex_endpoint = '/auth_transactions/amex'
+    headers = {"Authorization": "token wwed"}
+    amex_endpoint = "/auth_transactions/amex"
 
     payload = {
         "transaction_time": "2013-05-23 20:30:15",
@@ -20,7 +20,7 @@ class TestAmex(TestCase):
         "transaction_amount": "249.99",
         "cm_alias": "88578a9d-0130-4cd9-b099-92977cc0345f",
         "merchant_number": "1042789701",
-        "offer_id": "1225"
+        "offer_id": "1225",
     }
 
     def setUp(self):
@@ -39,11 +39,11 @@ class TestAmex(TestCase):
             "transaction_time": "2013-05-23 20:30:15",
             "transaction_id": "12349",
             "cm_alias": "88578a9d-0130-4cd9-b099-92977cc0345f",
-            "offer_id": "1225"
+            "offer_id": "1225",
         }
 
         resp = self.simulate_post(self.amex_endpoint, json=payload, headers=self.headers)
         self.assertTrue(mock_decode.called)
         self.assertTrue(mock_get_client.called)
         self.assertEqual(resp.status_code, 400)
-        self.assertEqual(resp.json['name'], 'INVALID_DATA_FORMAT')
+        self.assertEqual(resp.json["name"], "INVALID_DATA_FORMAT")

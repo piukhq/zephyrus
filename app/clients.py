@@ -21,9 +21,9 @@ class ClientInfo:
             self.data = self.update_client_apps()
 
     def update_client_apps(self):
-        url = f'{HERMES_URL}/payment_cards/client_apps'
+        url = f"{HERMES_URL}/payment_cards/client_apps"
         try:
-            resp = requests.get(url, headers={'Authorization': f'token {SERVICE_API_KEY}'})
+            resp = requests.get(url, headers={"Authorization": f"token {SERVICE_API_KEY}"})
 
             # Validate response data
             data = resp.json()
@@ -52,7 +52,7 @@ class ClientInfo:
     def get_client(client_id):
         try:
             client = ClientInfo._get(f"auth-transactions:{client_id}")
-            client_data = json.loads(client.decode('utf-8'))
+            client_data = json.loads(client.decode("utf-8"))
         except AttributeError as e:
             raise CustomException(CLIENT_DOES_NOT_EXIST) from e
 

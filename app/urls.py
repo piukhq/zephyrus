@@ -8,10 +8,10 @@ from app.visa import VisaView
 url = namedtuple("url", ["uri_template", "resource"])
 
 urlpatterns = [
-    url('/healthz', HealthCheck),
-    url('/auth_transactions/authorize', AmexAuthView),
-    url('/me', AmexMeView),
-    url('/auth_transactions/amex', AmexView),
-    url('/auth_transactions/mastercard', MasterCardView),
-    url('/auth_transactions/visa', VisaView)
+    url("/healthz", HealthCheck),
+    url("/auth_transactions/authorize", AmexAuthView),
+    url("/me", AmexMeView),
+    url("/auth_transactions/amex", AmexView),
+    url("/auth_transactions/mastercard", MasterCardView),
+    url("/auth_transactions/visa", VisaView),
 ]

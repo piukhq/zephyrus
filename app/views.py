@@ -5,5 +5,5 @@ if TYPE_CHECKING:
 
 
 class HealthCheck:
-    def on_get(self, req: 'falcon.Request', resp: 'falcon.Response'):
-        resp.media = ''
+    def on_get(self, req: "falcon.Request", resp: "falcon.Response"):
+        resp.media = ""
