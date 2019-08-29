@@ -1,7 +1,5 @@
 from unittest import mock
-from unittest.mock import MagicMock
 
-import requests
 from falcon.testing import TestCase
 
 from app import create_app
