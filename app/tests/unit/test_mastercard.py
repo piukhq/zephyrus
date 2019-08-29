@@ -10,6 +10,7 @@ from app.tests.test_helpers.signed_xml import Certificate, SignedXML, MockMaster
     valid_transaction_xml, UnsignedXML
 
 
+@patch('app.mastercard.views.send_to_zagreus')
 class MasterCardAuthTestCases(TestCase):
     TESTING = True
     mastercard_endpoint = '/auth_transactions/mastercard'
@@ -30,53 +31,37 @@ class MasterCardAuthTestCases(TestCase):
         super(MasterCardAuthTestCases, self).setUp()
         self.app = create_app()
 
-    def test_valid_transaction_response(self):
+    def test_valid_transaction_response(self, _):
         signed_xml = SignedXML(MockMastercardAuthTransaction(), signing_cert=self.cert)
         with patch('app.mastercard.process_xml_request.azure_read_cert') as mock_certificate:
-            with patch('app.utils.requests.post') as mock_post:
-                mock_certificate.return_value = signed_xml.mock_signing_certificate()
-                mock_post.return_value.status_code = 201
-                resp = self.simulate_post(self.mastercard_endpoint, body=signed_xml.xml, headers=self.headers)
+            mock_certificate.return_value = signed_xml.mock_signing_certificate()
+            resp = self.simulate_post(self.mastercard_endpoint, body=signed_xml.xml, headers=self.headers)
         self.assertTrue(valid_transaction_xml(resp.json), "Invalid XML response")
         self.assertEqual(resp.status_code, 200)
 
-    def test_invalid_transaction_response_to_wrong_cert(self):
+    def test_invalid_transaction_response_to_wrong_cert(self, _):
         signed_xml = SignedXML(MockMastercardAuthTransaction(), signing_cert=self.cert)
         with patch('app.mastercard.process_xml_request.azure_read_cert') as mock_certificate:
-            with patch('app.utils.requests.post') as mock_post:
-                mock_post.return_value.status_code = 201
-                cert = Certificate()
-                mock_certificate.return_value = cert.root_pem_certificate
-                resp = self.simulate_post(self.mastercard_endpoint, body=signed_xml.xml, headers=self.headers)
+            cert = Certificate()
+            mock_certificate.return_value = cert.root_pem_certificate
+            resp = self.simulate_post(self.mastercard_endpoint, body=signed_xml.xml, headers=self.headers)
         self.assertTrue(valid_transaction_xml(resp.json), "Invalid XML response")
         self.assertEqual(resp.status_code, 403)
 
-    def test_invalid_transaction_response_no_amount_in_xml(self):
+    def test_invalid_transaction_response_no_amount_in_xml(self, _):
         xml_obj = UnsignedXML(MockMastercardAuthTransaction())
         xml_obj.remove("transAmt")
         print(xml_obj.xml)
         signed_xml = SignedXML(xml_obj.get_transaction(), signing_cert=self.cert)
 
         with patch('app.mastercard.process_xml_request.azure_read_cert') as mock_certificate:
-            with patch('app.utils.requests.post') as mock_post:
-                mock_post.return_value.status_code = 201
-                cert = Certificate()
-                mock_certificate.return_value = cert.root_pem_certificate
-                resp = self.simulate_post(self.mastercard_endpoint, body=signed_xml.xml, headers=self.headers)
+            cert = Certificate()
+            mock_certificate.return_value = cert.root_pem_certificate
+            resp = self.simulate_post(self.mastercard_endpoint, body=signed_xml.xml, headers=self.headers)
         self.assertTrue(valid_transaction_xml(resp.json), "Invalid XML response")
         self.assertEqual(resp.status_code, 403)
 
-    def test_valid_transaction_response_when_hermes_fails(self):
-        signed_xml = SignedXML(MockMastercardAuthTransaction(), signing_cert=self.cert)
-        with patch('app.mastercard.process_xml_request.azure_read_cert') as mock_certificate:
-            with patch('app.utils.requests.post') as mock_post:
-                mock_certificate.return_value = signed_xml.mock_signing_certificate()
-                mock_post.return_value.status_code = 400
-                resp = self.simulate_post(self.mastercard_endpoint, body=signed_xml.xml, headers=self.headers)
-        self.assertTrue(valid_transaction_xml(resp.json), "Invalid XML response")
-        self.assertGreaterEqual(resp.status_code, 500)
-
-    def test_tampered_message(self):
+    def test_tampered_message(self, _):
         trans = MockMastercardAuthTransaction(
             "XXÿ", "2018-04-07T17:51:01.0000700-00:00", "999456789012345",
             trans_id="11111",
@@ -102,7 +87,7 @@ class MasterCardAuthTestCases(TestCase):
         self.assertTrue(valid_transaction_xml(resp.json), "Invalid XML response")
         self.assertEqual(resp.status_code, 403)
 
-    def test_xml_mastercard_processing(self):
+    def test_xml_mastercard_processing(self, _):
         signed_xml = SignedXML(MockMastercardAuthTransaction(), signing_cert=self.cert)
         with patch('app.mastercard.process_xml_request.azure_read_cert') as mock_certificate:
             mock_certificate.return_value = signed_xml.mock_signing_certificate()
@@ -119,7 +104,7 @@ class MasterCardAuthTestCases(TestCase):
         }
         self.assertDictEqual(expected, mc_data)
 
-    def test_xml_mastercard_processing_alt_data1(self):
+    def test_xml_mastercard_processing_alt_data1(self, _):
         trans = MockMastercardAuthTransaction(
             "XXÿ", "2018-04-07T17:51:01.0000700-00:00", "999456789012345",
             trans_id="11111",
@@ -151,7 +136,7 @@ class MasterCardAuthTestCases(TestCase):
         }
         self.assertDictEqual(expected, mc_data)
 
-    def test_xml_mastercard_processing_tampered_message(self):
+    def test_xml_mastercard_processing_tampered_message(self, _):
         signed_xml = SignedXML(MockMastercardAuthTransaction(trans_amt="0.45"), signing_cert=self.cert)
         tampered_xml = signed_xml.xml.decode('utf8').replace("0.45", "500")
         with patch('app.mastercard.process_xml_request.azure_read_cert') as mock_certificate:
@@ -161,7 +146,7 @@ class MasterCardAuthTestCases(TestCase):
         self.assertEquals(message, "Error Digest mismatch for reference 0")
         self.assertEquals(code, falcon.HTTP_403)
 
-    def test_xml_mastercard_processing_wrong_certificate(self):
+    def test_xml_mastercard_processing_wrong_certificate(self, _):
         signed_xml = SignedXML(MockMastercardAuthTransaction(trans_amt="0.45"), signing_cert=self.cert)
         with patch('app.mastercard.process_xml_request.azure_read_cert') as mock_certificate:
             cert = Certificate()
@@ -171,7 +156,7 @@ class MasterCardAuthTestCases(TestCase):
         self.assertEquals(code, falcon.HTTP_403)
         self.assertEqual(mc_data, {})
 
-    def test_get_valid_signed_data_elements(self):
+    def test_get_valid_signed_data_elements(self, _):
         """ Tests a certificate can be produced, a transaction signed and verified by signXML
         This tests the get_valid_signed_data function in process_xml_request will
         get all the required data
