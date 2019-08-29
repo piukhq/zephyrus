@@ -16,13 +16,13 @@ def mastercard_signed_xml_response(func):
     and replying in standard error format for mastercard
     """
 
-    def wrapper(req: 'falcon.Request', resp: 'falcon.Response', *args, **kwargs):
+    def wrapper(req: "falcon.Request", resp: "falcon.Response", *args, **kwargs):
         xml, mc_data, message, code = mastercard_request(req.media)
         # message is currently not used but mastercard might in future want this in the xml reponse
         try:
             req.context.transaction_data = mc_data
             ret = func(func, req, resp, *args, **kwargs)
-            if not ret['success'] and code == falcon.HTTP_200:
+            if not ret["success"] and code == falcon.HTTP_200:
                 code = falcon.HTTP_400
                 # might need in future to set and return message = "Data processing error" but currently not used
 
@@ -71,20 +71,17 @@ def get_valid_signed_data_elements(binary_xml, pem_signing_cert):
     """
     signing_cert = load_certificate(FILETYPE_PEM, add_pem_header(pem_signing_cert))
     cert_subject_name = signing_cert.get_subject().commonName
-    assertion_data_elements = XMLVerifier().verify(binary_xml,
-                                                   x509_cert=pem_signing_cert,
-                                                   cert_subject_name=cert_subject_name).signed_xml
+    assertion_data_elements = (
+        XMLVerifier().verify(binary_xml, x509_cert=pem_signing_cert, cert_subject_name=cert_subject_name).signed_xml
+    )
     return assertion_data_elements
 
 
 def azure_read_cert():
-    blob_service = BlockBlobService(
-        account_name=settings.AZURE_ACCOUNT_NAME,
-        account_key=settings.AZURE_ACCOUNT_KEY
-    )
+    blob_service = BlockBlobService(account_name=settings.AZURE_ACCOUNT_NAME, account_key=settings.AZURE_ACCOUNT_KEY)
     blob = blob_service.get_blob_to_text(
         settings.AZURE_CONTAINER,
-        f"{settings.AZURE_CERTIFICATE_FOLDER.strip('/')}/{settings.MASTERCARD_CERTIFICATE_BLOB_NAME.strip('/')}"
+        f"{settings.AZURE_CERTIFICATE_FOLDER.strip('/')}/{settings.MASTERCARD_CERTIFICATE_BLOB_NAME.strip('/')}",
     )
     return blob.content
 
@@ -96,7 +93,7 @@ def mastercard_request(xml_data):
     try:
         # To ensure we always return an identical format we can remove the signature from the document
         # using string methods:
-        response_xml = remove_from_xml_string(xml_data.decode('utf8'), "<ds:Signature", "/ds:Signature>")
+        response_xml = remove_from_xml_string(xml_data.decode("utf8"), "<ds:Signature", "/ds:Signature>")
 
         xml_doc = etree.fromstring(xml_data)
         xml_tree_root = etree.ElementTree(xml_doc)
@@ -106,33 +103,36 @@ def mastercard_request(xml_data):
         # map mastercard tags to bink hermes naming convention then tidy up bespoke discrepancies such as time
 
         conversion_map = {
-            'merchId': 'mid',
-            'transAmt': 'amount',
-            'bankCustNum': 'payment_card_token',
-            'refNum': 'third_party_id',
-            'transDate': 'mc_date',
-            'transTime': 'mc_time'
+            "merchId": "mid",
+            "transAmt": "amount",
+            "bankCustNum": "payment_card_token",
+            "refNum": "third_party_id",
+            "transDate": "mc_date",
+            "transTime": "mc_time",
         }
 
-        mc_data = {conversion_map[element.tag]: element.text
-                   for element in valid_data_elements if element.tag in conversion_map}
+        mc_data = {
+            conversion_map[element.tag]: element.text
+            for element in valid_data_elements
+            if element.tag in conversion_map
+        }
 
-        mc_data['currency_code'] = 'GBP'
+        mc_data["currency_code"] = "GBP"
 
-        time_obj = arrow.get(mc_data['mc_time'] + mc_data['mc_date'], "HHmmssMMDDYYYY")
-        mc_data['time'] = time_obj.format("YYYY-MM-DD HH:mm:ss")
+        time_obj = arrow.get(mc_data["mc_time"] + mc_data["mc_date"], "HHmmssMMDDYYYY")
+        mc_data["time"] = time_obj.format("YYYY-MM-DD HH:mm:ss")
 
-        del (mc_data['mc_date'])
-        del (mc_data['mc_time'])
+        del mc_data["mc_date"]
+        del mc_data["mc_time"]
 
         return response_xml, mc_data, None, falcon.HTTP_200
 
     except etree.ParseError as e:
         sentry_sdk.capture_exception(e)
-        return response_xml, mc_data, f'XML Parse Error: {e}', falcon.HTTP_400
+        return response_xml, mc_data, f"XML Parse Error: {e}", falcon.HTTP_400
     except (TypeError, IndexError, KeyError, AttributeError, ValueError, InvalidInput) as e:
         sentry_sdk.capture_exception(e)
-        return response_xml, mc_data, f'Error {e}', falcon.HTTP_400
+        return response_xml, mc_data, f"Error {e}", falcon.HTTP_400
     except (InvalidCertificate, InvalidSignature, InvalidDigest) as e:
         sentry_sdk.capture_exception(e)
-        return response_xml, mc_data, f'Error {e}', falcon.HTTP_403
+        return response_xml, mc_data, f"Error {e}", falcon.HTTP_403

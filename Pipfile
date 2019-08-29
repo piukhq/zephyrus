@@ -4,7 +4,6 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-python-dotenv = "*"
 requests = "*"
 lxml = "*"
 signxml = "*"
@@ -15,7 +14,7 @@ azure-storage-blob = "*"
 redis = "*"
 falcon = "*"
 sentry-sdk = {extras = ["falcon"],version = "*"}
-celery = "*"
+kombu = "*"
 
 [dev-packages]
 pytest = "*"

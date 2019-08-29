@@ -16,13 +16,12 @@ import io
 
 
 class BasicXML:
-
     def __init__(self, xml=None, element=None):
         self.xml = None
         self.xml_doc = None
         self.tree = None
         if xml:
-            self.xml = xml.encode('utf-8')
+            self.xml = xml.encode("utf-8")
             if not element:
                 element = etree.ElementTree(etree.fromstring(self.xml))
         if element:
@@ -32,7 +31,7 @@ class BasicXML:
         element = self.get_xml_element(element_tag)
         parent = element.getparent()
         parent.remove(element)
-        self.xml = etree.tostring(self.tree).decode('utf-8')
+        self.xml = etree.tostring(self.tree).decode("utf-8")
 
     def get_xml_element_tree(self, element_tag):
         return etree.ElementTree(self.get_xml_element(element_tag))
@@ -46,7 +45,7 @@ class BasicXML:
     @staticmethod
     def get_hash(input_text):
         hash_object = hashlib.sha1(input_text)
-        b_str = str(base64.b64encode(hash_object.digest()), 'utf-8')
+        b_str = str(base64.b64encode(hash_object.digest()), "utf-8")
         return b_str
 
     @staticmethod
@@ -57,23 +56,21 @@ class BasicXML:
 
 
 class UnsignedXML(BasicXML):
-
     def __init__(self, transaction):
         xml = etree.tostring(transaction.xml_tree)
-        super().__init__(xml=xml.decode('utf8'))
+        super().__init__(xml=xml.decode("utf8"))
 
     def get_transaction(self):
         return Transaction(self.xml)
 
 
 class Transaction:
-
     def __init__(self, xml):
         self.transaction_xml = xml
 
     @property
     def xml_tree(self):
-        return etree.ElementTree(etree.fromstring(self.transaction_xml.encode('utf-8')))
+        return etree.ElementTree(etree.fromstring(self.transaction_xml.encode("utf-8")))
 
     @property
     def xml(self):
@@ -81,7 +78,6 @@ class Transaction:
 
 
 class SignedXML(BasicXML):
-
     def __init__(self, transaction, signing_cert=None):
 
         if not signing_cert:
@@ -92,7 +88,7 @@ class SignedXML(BasicXML):
         self.transaction = transaction
         xml = etree.tostring(self.signing_cert.sign(self.transaction.xml_tree))
 
-        super().__init__(xml=xml.decode('utf8'))
+        super().__init__(xml=xml.decode("utf8"))
 
     def mock_signing_certificate(self):
         """
@@ -123,16 +119,17 @@ class SignedXML(BasicXML):
 
 
 class Certificate:
-
     def __init__(self):
         self.common_name = "mysite.com"
-        self.cert_subject = self.issuer = x509.Name([
-            x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
-            x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "CA"),
-            x509.NameAttribute(NameOID.LOCALITY_NAME, "San Francisco"),
-            x509.NameAttribute(NameOID.ORGANIZATION_NAME, "My Company"),
-            x509.NameAttribute(NameOID.COMMON_NAME, self.common_name),
-        ])
+        self.cert_subject = self.issuer = x509.Name(
+            [
+                x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
+                x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "CA"),
+                x509.NameAttribute(NameOID.LOCALITY_NAME, "San Francisco"),
+                x509.NameAttribute(NameOID.ORGANIZATION_NAME, "My Company"),
+                x509.NameAttribute(NameOID.COMMON_NAME, self.common_name),
+            ]
+        )
 
         self.private_key = self.make_private_key()
         self.public_key = self.private_key.public_key()
@@ -148,35 +145,37 @@ class Certificate:
             encoding=serialization.Encoding.PEM,
             format=serialization.PrivateFormat.TraditionalOpenSSL,
             encryption_algorithm=serialization.BestAvailableEncryption(b"passphrase"),
-        ).decode('utf-8')
+        ).decode("utf-8")
 
     def make_root_certificate(self):
         # Various details about who we are. For a self-signed certificate the
         # subject and issuer are always the same.
-        return x509.CertificateBuilder()\
-            .subject_name(self.cert_subject)\
-            .issuer_name(self.issuer)\
-            .public_key(self.public_key)\
-            .serial_number(x509.random_serial_number())\
-            .not_valid_before(datetime.datetime.utcnow())\
-            .not_valid_after(datetime.datetime.utcnow() + datetime.timedelta(days=2))\
-            .add_extension(x509.SubjectAlternativeName([x509.DNSName(u"localhost")]), critical=False,)\
+        return (
+            x509.CertificateBuilder()
+            .subject_name(self.cert_subject)
+            .issuer_name(self.issuer)
+            .public_key(self.public_key)
+            .serial_number(x509.random_serial_number())
+            .not_valid_before(datetime.datetime.utcnow())
+            .not_valid_after(datetime.datetime.utcnow() + datetime.timedelta(days=2))
+            .add_extension(x509.SubjectAlternativeName([x509.DNSName("localhost")]), critical=False)
             .sign(self.private_key, hashes.SHA256(), default_backend())
+        )
 
     @property
     def root_pem_certificate(self):
-        return self.root_cert.public_bytes(serialization.Encoding.PEM).decode('utf-8')
+        return self.root_cert.public_bytes(serialization.Encoding.PEM).decode("utf-8")
 
     def sign(self, xml):
-        return XMLSigner(method=sign_methods.enveloped,
-                         signature_algorithm="rsa-sha1",
-                         digest_algorithm='sha1',
-                         c14n_algorithm=u'http://www.w3.org/2001/10/xml-exc-c14n#')\
-            .sign(xml, key=self.private_key,  cert=self.root_pem_certificate)
+        return XMLSigner(
+            method=sign_methods.enveloped,
+            signature_algorithm="rsa-sha1",
+            digest_algorithm="sha1",
+            c14n_algorithm="http://www.w3.org/2001/10/xml-exc-c14n#",
+        ).sign(xml, key=self.private_key, cert=self.root_pem_certificate)
 
 
 class MockMastercardAuthTransaction(Transaction):
-
     def __init__(self, *args, **kwargs):
         self.ref_num = "MDSPX38FG"
         self.timestamp = "2011-04-07T17:51:01.0000700-05:00"
@@ -193,41 +192,70 @@ class MockMastercardAuthTransaction(Transaction):
         self.token_rqstr_id = "50110030273"
         self.ret_cd = "0"
         self.digest = "oh5jTf3ufNbKvfE8WzsssHce95E="
-        self.signature_value = "p8TkEWT0+LZfGo246jxMYev0qyIRTPolhog19b45keFHEbguSHnDxl75ZHVraBch29MtFwN4nVOSpYdJiw" \
-                               "Euyc74jbvTAfOfIu9Bh4N16bS421uiUoLsZrpbreqaHYkwhhCn+s11tNnAVI/p2nZyOGVyssFfFU9PH09m" \
-                               "cbrn2T0="
-        self.x509_cert = \
-            "MIIE1DCCA7ygAwIBAgIRAMpP4+8x8zLTs9QtLr8UTlAwDQYJKoZIhvcNAQEFBQAweDELMAkGA1UEBhMCVVMxHTA" \
-            "bBgNVBAoTFE1hc3RlckNhcmQgV29ybGR3aWRlMSkwJwYDVQQLEyBHbG9iYWwgVGVjaG5vbG9neSBhbmQgT3BlcmF" \
-            "0aW9uczEfMB0GA1UEAxMWTWFzdGVyQ2FyZCAgU1NMIFN1YiBDQTAeFw0wODA4MjkxNDA0NDhaFw0xMDA4MjkxNDA0" \
-            "NDlaMIGgMQswCQYDVQQGEwJVUzERMA8GA1UECBMITWlzc291cmkxFDASBgNVBAcTC1NhaW50IExvdWlzMR0wGwYDV" \
-            "QQKExRNYXN0ZXJDYXJkIFdvcmxkd2lkZTEdMBsGA1UECxMUY2l0aXplbnMtb25saW5lLW1hbGwxKjAoBgNVBAMTIXN" \
-            "0bG1yc2pzZWN0MS5jb3JwLm1hc3RlcmNhcmQudGVzdDCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEAtM6O3e" \
-            "r9A2BRLxT9l3CPqqGv4jAe35K8pA2NxX7qSqwLiszaDiC5GV5GzvJ0/stlr6pM6CRR1gLIyVEyQjL1kA+qBFQ1YO" \
-            "I8AzypxeSxiAyW5DZ3rt4+qOIzJxTOOyAqUw80Hfuqk+J0NdchXZkAaMU5Sx9T6inLElrzCbNQMUUCAwEAAaOCAb" \
-            "IwggGuMB8GA1UdIwQYMBaAFNVf0euD27u/RRw+3HIysV/aF4rDMAkGA1UdEwQCMAAwggERBgNVHSAEggEIMIIBBD" \
-            "CCAQAGCSqGSIb3DQUGATCB8jAzBggrBgEFBQcCARYnaHR0cDovL2NlcnRpZmljYXRlcy5tYXN0ZXJjYXJkLmNvbS9" \
-            "DUFMvMIG6BggrBgEFBQcCAjCBrTAbFhRNYXN0ZXJDYXJkIFdvcmxkd2lkZTADAgEBGoGNVGhlIE1hc3RlckNhcmQg" \
-            "V29ybGR3aWRlIENlcnRpZmljYXRpb24gUHJhY3RpY2UgU3RhdGVtZW50IGdvdmVybnMgdGhpcyBjZXJ0aWZpY2F0ZS" \
-            "BhbmQgaXMgaW5jb3Jwb3JhdGVkIGJ5IHJlZmVyZW5jZSBoZXJlaW4uIExpbWl0ZWQgTGlhYmlsaXR5MDwGA1UdHwQ1" \
-            "MDMwMaAvoC2GK2h0dHA6Ly9jZXJ0aWZpY2F0ZXMubWFzdGVyY2FyZC5jb20vQ1JMX1BVQi8wDgYDVR0PAQH/BAQDA" \
-            "geAMB0GA1UdDgQWBBTewBdq6vV1ym9QqBv55hE4TjZ1eTANBgkqhkiG9w0BAQUFAAOCAQEAB6+Htrkv7V48OllLzO" \
-            "hzaaCafuW3PQNFQze2cpH7QGPrKuB+XOQDYMatb8KN887T00GS/GQxdkU7KCxK8CV1Ms6fjpp5atWQqtRTzuyC1kh" \
-            "F3HvwlvE6zAW6v7UKqHIxAktPPXRmikUU+u5OiXSsIpf3T1rO+20IIWLJY3dl3iGKRgFEe/LRWvrOnXUNMRajSA89" \
-            "15EVcxWrYDpa8IlNhUdnr+gFDY4cj/YPOr5GtbikinqEr6z5tn/lj0UpIvk9Ab97bA9v7NITVml/9DkjIrQ0DW5q8" \
+        self.signature_value = (
+            "p8TkEWT0+LZfGo246jxMYev0qyIRTPolhog19b45keFHEbguSHnDxl75ZHVraBch29MtFwN4nVOSpYdJiw"
+            "Euyc74jbvTAfOfIu9Bh4N16bS421uiUoLsZrpbreqaHYkwhhCn+s11tNnAVI/p2nZyOGVyssFfFU9PH09m"
+            "cbrn2T0="
+        )
+        self.x509_cert = (
+            "MIIE1DCCA7ygAwIBAgIRAMpP4+8x8zLTs9QtLr8UTlAwDQYJKoZIhvcNAQEFBQAweDELMAkGA1UEBhMCVVMxHTA"
+            "bBgNVBAoTFE1hc3RlckNhcmQgV29ybGR3aWRlMSkwJwYDVQQLEyBHbG9iYWwgVGVjaG5vbG9neSBhbmQgT3BlcmF"
+            "0aW9uczEfMB0GA1UEAxMWTWFzdGVyQ2FyZCAgU1NMIFN1YiBDQTAeFw0wODA4MjkxNDA0NDhaFw0xMDA4MjkxNDA0"
+            "NDlaMIGgMQswCQYDVQQGEwJVUzERMA8GA1UECBMITWlzc291cmkxFDASBgNVBAcTC1NhaW50IExvdWlzMR0wGwYDV"
+            "QQKExRNYXN0ZXJDYXJkIFdvcmxkd2lkZTEdMBsGA1UECxMUY2l0aXplbnMtb25saW5lLW1hbGwxKjAoBgNVBAMTIXN"
+            "0bG1yc2pzZWN0MS5jb3JwLm1hc3RlcmNhcmQudGVzdDCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEAtM6O3e"
+            "r9A2BRLxT9l3CPqqGv4jAe35K8pA2NxX7qSqwLiszaDiC5GV5GzvJ0/stlr6pM6CRR1gLIyVEyQjL1kA+qBFQ1YO"
+            "I8AzypxeSxiAyW5DZ3rt4+qOIzJxTOOyAqUw80Hfuqk+J0NdchXZkAaMU5Sx9T6inLElrzCbNQMUUCAwEAAaOCAb"
+            "IwggGuMB8GA1UdIwQYMBaAFNVf0euD27u/RRw+3HIysV/aF4rDMAkGA1UdEwQCMAAwggERBgNVHSAEggEIMIIBBD"
+            "CCAQAGCSqGSIb3DQUGATCB8jAzBggrBgEFBQcCARYnaHR0cDovL2NlcnRpZmljYXRlcy5tYXN0ZXJjYXJkLmNvbS9"
+            "DUFMvMIG6BggrBgEFBQcCAjCBrTAbFhRNYXN0ZXJDYXJkIFdvcmxkd2lkZTADAgEBGoGNVGhlIE1hc3RlckNhcmQg"
+            "V29ybGR3aWRlIENlcnRpZmljYXRpb24gUHJhY3RpY2UgU3RhdGVtZW50IGdvdmVybnMgdGhpcyBjZXJ0aWZpY2F0ZS"
+            "BhbmQgaXMgaW5jb3Jwb3JhdGVkIGJ5IHJlZmVyZW5jZSBoZXJlaW4uIExpbWl0ZWQgTGlhYmlsaXR5MDwGA1UdHwQ1"
+            "MDMwMaAvoC2GK2h0dHA6Ly9jZXJ0aWZpY2F0ZXMubWFzdGVyY2FyZC5jb20vQ1JMX1BVQi8wDgYDVR0PAQH/BAQDA"
+            "geAMB0GA1UdDgQWBBTewBdq6vV1ym9QqBv55hE4TjZ1eTANBgkqhkiG9w0BAQUFAAOCAQEAB6+Htrkv7V48OllLzO"
+            "hzaaCafuW3PQNFQze2cpH7QGPrKuB+XOQDYMatb8KN887T00GS/GQxdkU7KCxK8CV1Ms6fjpp5atWQqtRTzuyC1kh"
+            "F3HvwlvE6zAW6v7UKqHIxAktPPXRmikUU+u5OiXSsIpf3T1rO+20IIWLJY3dl3iGKRgFEe/LRWvrOnXUNMRajSA89"
+            "15EVcxWrYDpa8IlNhUdnr+gFDY4cj/YPOr5GtbikinqEr6z5tn/lj0UpIvk9Ab97bA9v7NITVml/9DkjIrQ0DW5q8"
             "cv2gerg47xmsLPHuLIQsKEGlyb9sr9v382gU6pj22n5n7SIwdn6rM7dVw=="
+        )
 
         self.signature = ""
 
         self.args_list = [
-            'ref_num', 'timestamp', 'bank_cust_num', 'trans_id', "trans_amt", "merch_id", "merch_name_loc",
-            "trans_date", "trans_time", "merch_cat_cd", "acquirer_ica", "wlt_id", "token_rqstr_id", "ret_cd", "digest",
-            "signature_value", "x509_cert"
+            "ref_num",
+            "timestamp",
+            "bank_cust_num",
+            "trans_id",
+            "trans_amt",
+            "merch_id",
+            "merch_name_loc",
+            "trans_date",
+            "trans_time",
+            "merch_cat_cd",
+            "acquirer_ica",
+            "wlt_id",
+            "token_rqstr_id",
+            "ret_cd",
+            "digest",
+            "signature_value",
+            "x509_cert",
         ]
 
         self.tags_list = [
-            "refNum", "timestamp", "bankCustNum", "transId", "transAmt", "merchId", "merchNameLoc", "transDate",
-            "transTime", "merchCatCd", "acquirerIca", "de48se26sf1WltId", "de48se33sf6TokenRqstrId", "retCd"
+            "refNum",
+            "timestamp",
+            "bankCustNum",
+            "transId",
+            "transAmt",
+            "merchId",
+            "merchNameLoc",
+            "transDate",
+            "transTime",
+            "merchCatCd",
+            "acquirerIca",
+            "de48se26sf1WltId",
+            "de48se33sf6TokenRqstrId",
+            "retCd",
         ]
 
         for v in range(0, len(args)):
@@ -300,13 +328,10 @@ def valid_transaction_xml(xml):
 
 
 def azure_write(file, text):
-    blob_service = BlockBlobService(
-        account_name=settings.AZURE_ACCOUNT_NAME,
-        account_key=settings.AZURE_ACCOUNT_KEY
-    )
+    blob_service = BlockBlobService(account_name=settings.AZURE_ACCOUNT_NAME, account_key=settings.AZURE_ACCOUNT_KEY)
     blob_service.create_blob_from_text(
         settings.AZURE_CONTAINER,
         f"{settings.AZURE_CERTIFICATE_FOLDER.strip('/')}/{settings.MASTERCARD_CERTIFICATE_BLOB_NAME.strip('/')}",
         text,
-        content_settings=ContentSettings(content_type="application/text")
+        content_settings=ContentSettings(content_type="application/text"),
     )
