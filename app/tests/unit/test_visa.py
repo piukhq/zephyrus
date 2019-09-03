@@ -1,3 +1,4 @@
+import typing as t
 import base64
 from unittest import mock
 
@@ -12,7 +13,7 @@ class TestVisa(TestCase):
     TESTING = True
     VISA_CREDENTIALS_HOLD = None
     VISA_TEST_CREDENTIALS = {"username": "user@bink.test", "password": "Password1"}
-    headers = {}
+    headers: t.Dict[str, str] = {}
     visa_endpoint = "/auth_transactions/visa"
     payload = {
         "CardId": "e9636096-be12-f404-g595-006966f87787",

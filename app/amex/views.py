@@ -1,3 +1,5 @@
+import typing as t
+
 import falcon
 
 from app import queue
@@ -19,7 +21,7 @@ class AmexAuthView:
 
         # If redis was just updated by hermes (ClientInfo().data is not None), check against the data from
         # hermes' response instead of accessing redis again.
-        client = {}
+        client: t.Dict[str, t.Any] = {}
         if client_info_store.data:
             for client_object in client_info_store.data:
                 if client_id == client_object["client_id"]:
@@ -47,5 +49,5 @@ class AmexMeView:
 class AmexView:
     @jwt_auth
     def on_post(self, req: falcon.Request, resp: falcon.Response):
-        queue.add(req.media)
+        queue.add(req.media, provider="amex")
         resp.media = {"success": True}
