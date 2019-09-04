@@ -1,6 +1,12 @@
+import logging
+
 from environment import env_var, read_env
 
 read_env()
+
+LOG_LEVEL = getattr(logging, env_var("LOG_LEVEL", "DEBUG").upper())
+
+logging.basicConfig(format="%(asctime)s | %(name)24s | %(levelname)8s | %(message)s", level=LOG_LEVEL)
 
 DEV_HOST = env_var("DEV_HOST", "0.0.0.0")
 DEV_PORT = int(env_var("DEV_PORT", "5000"))
