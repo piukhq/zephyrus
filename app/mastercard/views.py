@@ -8,4 +8,3 @@ class MasterCardView:
     @mastercard_signed_xml_response
     def on_post(self, req: falcon.Request, resp: falcon.Response):
         queue.add(req.context.transaction_data, provider="mastercard")
-        return {"success": True}
