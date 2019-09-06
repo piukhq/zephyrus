@@ -18,7 +18,7 @@ def mastercard_signed_xml_response(func):
 
     def wrapper(req: falcon.Request, resp: falcon.Response, *args, **kwargs):
         xml, mc_data, message, code = mastercard_request(req.media)
-        if 400 <= code < 600:
+        if code in (falcon.HTTP_400, falcon.HTTP_403):
             resp.media = xml
             resp.status = code
             return
@@ -26,10 +26,7 @@ def mastercard_signed_xml_response(func):
         # message is currently not used but mastercard might in future want this in the xml reponse
         try:
             req.context.transaction_data = mc_data
-            ret = func(func, req, resp, *args, **kwargs)
-            if not ret["success"] and code == falcon.HTTP_200:
-                code = falcon.HTTP_400
-                # might need in future to set and return message = "Data processing error" but currently not used
+            func(func, req, resp, *args, **kwargs)
         except CustomException as e:
             sentry_sdk.capture_exception(e)
             if e.name == "CONNECTION_ERROR":
