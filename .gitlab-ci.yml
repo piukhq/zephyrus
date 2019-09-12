@@ -47,3 +47,35 @@ tag-develop:
     - tagbot --username "$CI_REGISTRY_USER" --password "$CI_REGISTRY_PASSWORD" --source "$CI_REGISTRY/zephyrus:latest" --tag "develop-$CI_COMMIT_SHORT_SHA"
   only:
     - develop
+
+build-master:
+  stage: build
+  image: docker:latest
+  services:
+    - docker:dind
+  before_script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
+  script:
+    - docker build --pull -t "$CI_REGISTRY/zephyrus:$CI_COMMIT_TAG" .
+    - docker push "$CI_REGISTRY/zephyrus:$CI_COMMIT_TAG"
+  only:
+    - tags
+
+tag-staging:
+  stage: tagging
+  image: binkops.azurecr.io/tagbot:latest
+  environment: staging
+  script:
+    - tagbot --username "$CI_REGISTRY_USER" --password "$CI_REGISTRY_PASSWORD" --source "$CI_REGISTRY/zephyrus:$CI_COMMIT_TAG" --tag "staging-$CI_COMMIT_TAG"
+  only:
+    - tags
+
+tag-prod:
+  stage: tagging
+  image: binkops.azurecr.io/tagbot:latest
+  environment: prod
+  script:
+    - tagbot --username "$CI_REGISTRY_USER" --password "$CI_REGISTRY_PASSWORD" --source "$CI_REGISTRY/zephyrus:$CI_COMMIT_TAG" --tag "prod-$CI_COMMIT_TAG"
+  when: manual
+  only:
+    - tags
