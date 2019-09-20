@@ -1,10 +1,5 @@
-import typing as t
-import base64
 from unittest import mock
-
 from falcon.testing import TestCase
-
-import settings
 from app import create_app
 
 
@@ -40,4 +35,8 @@ class TestVisa(TestCase):
 
     def test_successful_call(self, _):
         resp = self.simulate_post(self.visa_endpoint, json=self.payload)
+        self.assertEqual(resp.status_code, 200)
+
+    def test_no_payload_request(self, _):
+        resp = self.simulate_post(self.visa_endpoint, json={})
         self.assertEqual(resp.status_code, 200)
