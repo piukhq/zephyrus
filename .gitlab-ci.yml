@@ -9,7 +9,7 @@ tests:
   stage: tests
   script:
     - pipenv install --dev --system --deploy --ignore-pipfile
-    - pytest --verbose --cov app --cov-report term-missing
+    - pytest --verbose --cov app --cov-report term-missing app/tests/unit
 
 complexity:
   stage: tests
