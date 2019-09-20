@@ -4,8 +4,11 @@ from falcon.media import JSONHandler, Handlers
 from sentry_sdk.integrations.falcon import FalconIntegration
 
 import settings
-from app import urls
 from app.errors import CustomException
+from app.amex import AmexAuthView, AmexMeView, AmexView
+from app.mastercard import MasterCardView
+from app.views import HealthCheck
+from app.visa import VisaView
 
 
 class RawXMLHandler(JSONHandler):
@@ -37,7 +40,12 @@ def create_app() -> falcon.API:
         }
     )
 
-    for url in urls.urlpatterns:
-        app.add_route(**url._asdict())
+    app.add_route("/auth_transactions/visa", VisaView())
+    app.add_route("/auth_transactions/mastercard", MasterCardView)
+    app.add_route("/healthz", HealthCheck())
+    app.add_route("/auth_transactions/authorize", AmexAuthView)
+    app.add_route("/me", AmexMeView)
+    app.add_route("/auth_transactions/amex", AmexView)
+    app.add_route("/auth_transactions/mastercard", MasterCardView)
 
     return app
