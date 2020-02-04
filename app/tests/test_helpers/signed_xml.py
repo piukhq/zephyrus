@@ -329,9 +329,8 @@ def valid_transaction_xml(xml):
 
 def azure_write(file, text):
     blob_service = BlobServiceClient(account_name=settings.AZURE_ACCOUNT_NAME, account_key=settings.AZURE_ACCOUNT_KEY)
-    blob_service.create_blob_from_text(
+    blob_client = blob_service.get_blob_client(
         settings.AZURE_CONTAINER,
-        f"{settings.AZURE_CERTIFICATE_FOLDER.strip('/')}/{settings.MASTERCARD_CERTIFICATE_BLOB_NAME.strip('/')}",
-        text,
-        content_settings=ContentSettings(content_type="application/text"),
+        f"{settings.AZURE_CERTIFICATE_FOLDER.strip('/')}/{settings.MASTERCARD_CERTIFICATE_BLOB_NAME.strip('/')}"
     )
+    blob_client.upload_blob(text, blob_type="BlockBlob")

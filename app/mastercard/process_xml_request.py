@@ -81,11 +81,13 @@ def get_valid_signed_data_elements(binary_xml, pem_signing_cert):
 
 def azure_read_cert():
     blob_service = BlobServiceClient(account_name=settings.AZURE_ACCOUNT_NAME, account_key=settings.AZURE_ACCOUNT_KEY)
-    blob = blob_service.get_blob_to_text(
+    blob_client = blob_service.get_blob_client(
         settings.AZURE_CONTAINER,
-        f"{settings.AZURE_CERTIFICATE_FOLDER.strip('/')}/{settings.MASTERCARD_CERTIFICATE_BLOB_NAME.strip('/')}",
+        f"{settings.AZURE_CERTIFICATE_FOLDER.strip('/')}/{settings.MASTERCARD_CERTIFICATE_BLOB_NAME.strip('/')}"
     )
-    return blob.content
+    blob_stream = blob_client.download_blob()
+
+    return blob_stream.readall()
 
 
 def mastercard_request(xml_data):
