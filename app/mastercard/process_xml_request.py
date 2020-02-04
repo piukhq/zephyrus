@@ -83,7 +83,7 @@ def azure_read_cert():
     blob_service = BlobServiceClient(account_name=settings.AZURE_ACCOUNT_NAME, account_key=settings.AZURE_ACCOUNT_KEY)
     blob_client = blob_service.get_blob_client(
         settings.AZURE_CONTAINER,
-        f"{settings.AZURE_CERTIFICATE_FOLDER.strip('/')}/{settings.MASTERCARD_CERTIFICATE_BLOB_NAME.strip('/')}"
+        f"{settings.AZURE_CERTIFICATE_FOLDER.strip('/')}/{settings.MASTERCARD_CERTIFICATE_BLOB_NAME.strip('/')}",
     )
     blob_stream = blob_client.download_blob()
 
