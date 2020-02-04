@@ -25,9 +25,10 @@ def load_secrets():
 
 def generate_jwt(slug):
     client_secrets = load_secrets()
-    client_id = client_secrets[slug]["client_id"]
-    secret = client_secrets[slug]["secret"]
-    if client_id and client_id.strip() and secret and secret.strip():
+    client_id = client_secrets[slug].get("client_id", "").strip()
+    secret = client_secrets[slug].get("secret", "").strip()
+
+    if client_id and secret:
         time_now = arrow.now()
         claims = {
             "exp": time_now.shift(minutes=+5).timestamp,
