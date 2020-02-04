@@ -9,6 +9,7 @@ from app import create_app
 from app.security import generate_jwt, load_secrets
 
 
+@mock.patch("app.queue.add")
 class TestJwtAuth(TestCase):
     TESTING = True
     headers = {"Authorization": "token edfe"}
@@ -29,18 +30,18 @@ class TestJwtAuth(TestCase):
 
     @mock.patch("app.security.load_secrets")
     @freeze_time("2020-02-21")
-    def test_auth_endpoint_success(self, mock_load_secrets):
+    def test_auth_endpoint_success(self, mock_load_secrets, _):
         mock_load_secrets.return_value = {"amex": {"client_id": "testid", "secret": "testsecret"}}
 
         resp = self.simulate_post(self.amex_auth_end_point, json=self.payload, headers={})
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(
             resp.json["api_key"],
-            "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1ODIyNDM1MDAsIm5iZiI6MTU4MjI0MzIwMCwiaXNzIjoiYmluayIsImF1ZCI6Imh0dHBzOi8vYXBpLmJpbmsuY29tIiwiaWF0IjoxNTgyMjQzMjAwLCJzdWIiOiJ0ZXN0aWQifQ.irf-CKuXMCs071vfTZPfjTXIafLytQzts9DXHTJWzUs",
-        )  # noqa
+            "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1ODIyNDM1MDAsIm5iZiI6MTU4MjI0MzIwMCwiaXNzIjoiYmluayIsImF1ZCI6Imh0dHBzOi8vYXBpLmJpbmsuY29tIiwiaWF0IjoxNTgyMjQzMjAwLCJzdWIiOiJ0ZXN0aWQifQ.irf-CKuXMCs071vfTZPfjTXIafLytQzts9DXHTJWzUs",  # noqa
+        )
 
     @mock.patch("app.security.load_secrets")
-    def test_auth_endpoint_fails_missing_params(self, mock_load_secrets):
+    def test_auth_endpoint_fails_missing_params(self,mock_load_secrets, _):
         mock_load_secrets.return_value = {"amex": {"client_id": "", "secret": "testsecret"}}
         payload_error = {"client_id": "", "client_secret": "testsecret"}
         resp = self.simulate_post(self.amex_auth_end_point, json=payload_error, headers={})
@@ -48,7 +49,7 @@ class TestJwtAuth(TestCase):
 
     @mock.patch("app.security.load_secrets")
     @freeze_time("2020-02-21")
-    def test_generate_jwt(self, mock_load_secrets):
+    def test_generate_jwt(self, mock_load_secrets, _):
         mock_load_secrets.return_value = {"amex": {"client_id": "testid", "secret": "testsecret"}}
         token = generate_jwt("amex")
 
@@ -58,14 +59,14 @@ class TestJwtAuth(TestCase):
 
     @mock.patch("app.security.load_secrets")
     @freeze_time("2020-02-21")
-    def test_generate_jwt_error(self, mock_load_secrets):
+    def test_generate_jwt_error(self, mock_load_secrets, _):
         mock_load_secrets.return_value = {"amex": {"client_id": "", "secret": "testsecret"}}
         token = generate_jwt("amex")
 
         self.assertEqual(token, None)
 
     @mock.patch("app.security.read_vault", autospec=True)
-    def test_load_secrets(self, mock_read_vault):
+    def test_load_secrets(self, mock_read_vault, _):
         mock_read_vault.return_value = {"amex": {"client_id": "testid", "secret": "testsecret"}}
         secret = load_secrets()
         self.assertTrue(mock_read_vault.called)
@@ -79,7 +80,7 @@ class TestJwtAuth(TestCase):
 
     @mock.patch("app.amex.authentication.load_secrets")
     @mock.patch("app.amex.authentication.jose.jwt.decode", autospec=True)
-    def test_auth_decorator_success(self, mock_decode, mock_load_secrets):
+    def test_auth_decorator_success(self, _, mock_decode, mock_load_secrets):
         mock_load_secrets.return_value = {"amex": {"client_id": "", "secret": "testsecret"}}
 
         resp = self.simulate_post(self.amex_endpoint, json=self.payload, headers=self.headers)
@@ -88,7 +89,7 @@ class TestJwtAuth(TestCase):
         self.assertEqual(resp.status_code, 200)
 
     @mock.patch("app.amex.authentication.load_secrets")
-    def test_auth_decorator_fails_missing_header(self, mock_load_secrets):
+    def test_auth_decorator_fails_missing_header(self, _, mock_load_secrets):
         mock_load_secrets.return_value = {"amex": {"client_id": "", "secret": "testsecret"}}
         resp = self.simulate_post(self.amex_endpoint, json=self.payload)
 
@@ -96,7 +97,7 @@ class TestJwtAuth(TestCase):
         self.assertEqual(resp.json["name"], "MISSING_AUTH")
 
     @mock.patch("app.amex.authentication.load_secrets")
-    def test_auth_decorator_fails_wrong_format(self, mock_load_secrets):
+    def test_auth_decorator_fails_wrong_format(self, _, mock_load_secrets):
         headers = {"Authorization": "badformat"}
         mock_load_secrets.return_value = {"amex": {"client_id": "", "secret": "testsecret"}}
         resp = self.simulate_post(self.amex_endpoint, json=self.payload, headers=headers)
@@ -105,7 +106,7 @@ class TestJwtAuth(TestCase):
         self.assertEqual(resp.json["name"], "INVALID_AUTH_FORMAT")
 
     @mock.patch("app.amex.authentication.load_secrets")
-    def test_auth_decorator_fails_wrong_prefix(self, mock_load_secrets):
+    def test_auth_decorator_fails_wrong_prefix(self, _, mock_load_secrets):
         headers = {"Authorization": "nottoken sdfsdf"}
         mock_load_secrets.return_value = {"amex": {"client_id": "", "secret": "testsecret"}}
 
@@ -116,7 +117,7 @@ class TestJwtAuth(TestCase):
 
     @mock.patch("app.amex.authentication.load_secrets")
     @mock.patch("app.amex.authentication.jose.jwt.decode", autospec=True)
-    def test_auth_decorator_fails_expired_signature(self, mock_decode, mock_load_secrets):
+    def test_auth_decorator_fails_expired_signature(self, _, mock_decode, mock_load_secrets):
         mock_decode.side_effect = jose.exceptions.ExpiredSignatureError
         mock_load_secrets.return_value = {"amex": {"client_id": "", "secret": "testsecret"}}
 
@@ -126,7 +127,7 @@ class TestJwtAuth(TestCase):
 
     @mock.patch("app.amex.authentication.load_secrets")
     @mock.patch("app.amex.authentication.jose.jwt.decode", autospec=True)
-    def test_auth_decorator_fails_invalid_signature(self, mock_decode, mock_load_secrets):
+    def test_auth_decorator_fails_invalid_signature(self, _, mock_decode, mock_load_secrets):
         mock_decode.side_effect = jose.exceptions.JWTError
         mock_load_secrets.return_value = {"amex": {"client_id": "", "secret": "testsecret"}}
 
