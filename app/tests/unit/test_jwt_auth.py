@@ -41,7 +41,7 @@ class TestJwtAuth(TestCase):
         )
 
     @mock.patch("app.security.load_secrets")
-    def test_auth_endpoint_fails_missing_params(self,mock_load_secrets, _):
+    def test_auth_endpoint_fails_missing_params(self, mock_load_secrets, _):
         mock_load_secrets.return_value = {"amex": {"client_id": "", "secret": "testsecret"}}
         payload_error = {"client_id": "", "client_secret": "testsecret"}
         resp = self.simulate_post(self.amex_auth_end_point, json=payload_error, headers={})
