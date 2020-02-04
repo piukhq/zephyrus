@@ -19,7 +19,7 @@ def load_secrets():
             _client_info = read_vault(VAULT_PATH, VAULT_URL, VAULT_TOKEN)
     except requests.RequestException as e:
         logging.exception(f"Unable to request the secrets from the Vault. {e}")
-        raise VaultError(f'Unable to request the secrets from the Vault {e}') from e
+        raise VaultError(f"Unable to request the secrets from the Vault {e}") from e
     return _client_info
 
 

@@ -8,7 +8,7 @@ from app.security import generate_jwt
 class AmexAuthView:
     @staticmethod
     def on_post(req: falcon.Request, resp: falcon.Response):
-        jwt = generate_jwt('amex')
+        jwt = generate_jwt("amex")
         if jwt:
             resp.media = {"api_key": jwt}
         else:

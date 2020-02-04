@@ -21,11 +21,12 @@ class TestJwtAuth(TestCase):
         super(TestJwtAuth, self).setUp()
         self.app = create_app()
 
-    '''
+    """
     freeze_time allows anything using a python datetime function to be fixed. This allows testing of the JWT
     token which uses a time stamp for expiry. Since the time is fixed we can compare the test token against what
     is actually generated running the test.
-    '''
+    """
+
     @mock.patch("app.security.load_secrets")
     @freeze_time("2020-02-21")
     def test_auth_endpoint_success(self, mock_load_secrets):
@@ -33,7 +34,10 @@ class TestJwtAuth(TestCase):
 
         resp = self.simulate_post(self.amex_auth_end_point, json=self.payload, headers={})
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(resp.json["api_key"], 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1ODIyNDM1MDAsIm5iZiI6MTU4MjI0MzIwMCwiaXNzIjoiYmluayIsImF1ZCI6Imh0dHBzOi8vYXBpLmJpbmsuY29tIiwiaWF0IjoxNTgyMjQzMjAwLCJzdWIiOiJ0ZXN0aWQifQ.irf-CKuXMCs071vfTZPfjTXIafLytQzts9DXHTJWzUs')  # noqa
+        self.assertEqual(
+            resp.json["api_key"],
+            "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1ODIyNDM1MDAsIm5iZiI6MTU4MjI0MzIwMCwiaXNzIjoiYmluayIsImF1ZCI6Imh0dHBzOi8vYXBpLmJpbmsuY29tIiwiaWF0IjoxNTgyMjQzMjAwLCJzdWIiOiJ0ZXN0aWQifQ.irf-CKuXMCs071vfTZPfjTXIafLytQzts9DXHTJWzUs",
+        )  # noqa
 
     @mock.patch("app.security.load_secrets")
     def test_auth_endpoint_fails_missing_params(self, mock_load_secrets):
@@ -65,7 +69,7 @@ class TestJwtAuth(TestCase):
         mock_read_vault.return_value = {"amex": {"client_id": "testid", "secret": "testsecret"}}
         secret = load_secrets()
         self.assertTrue(mock_read_vault.called)
-        self.assertEqual(secret['amex']['client_id'], "testid")
+        self.assertEqual(secret["amex"]["client_id"], "testid")
 
     # @mock.patch("app.security.read_vault", autospec=True)
     # def test_load_secrets_exception(self, mock_read_vault):

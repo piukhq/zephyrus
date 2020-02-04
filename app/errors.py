@@ -65,8 +65,8 @@ errors = {
     CONFIGURATION_ERROR: {
         "name": "Configuration error",
         "message": "There is an error with the configuration or it was not possible to retrieve.",
-        "code": "536"
-    }
+        "code": "536",
+    },
 }
 
 

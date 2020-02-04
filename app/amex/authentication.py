@@ -9,7 +9,7 @@ from app.errors import (
     INVALID_AUTH_FORMAT,
     INVALID_AUTH_TYPE,
     AUTH_EXPIRED,
-    INVALID_AUTH_TOKEN
+    INVALID_AUTH_TOKEN,
 )
 
 if TYPE_CHECKING:
@@ -32,9 +32,7 @@ def jwt_auth(f):
 
         try:
             client_secrets = load_secrets()
-            jose.jwt.decode(
-                token, key=client_secrets['amex']['secret'], audience="https://api.bink.com", issuer="bink"
-            )
+            jose.jwt.decode(token, key=client_secrets["amex"]["secret"], audience="https://api.bink.com", issuer="bink")
         except jose.exceptions.ExpiredSignatureError as e:
             raise AuthException(AUTH_EXPIRED) from e
         except jose.exceptions.JWTError as e:

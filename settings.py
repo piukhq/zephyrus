@@ -42,6 +42,6 @@ AMQP_HOST = env_var("AMQP_HOST", "localhost")
 AMQP_PORT = env_var("AMQP_PORT", "5672")
 AMQP_DSN = f"amqp://{AMQP_USER}:{AMQP_PASSWORD}@{AMQP_HOST}:{AMQP_PORT}//"
 
-VAULT_URL = env_var('VAULT_URL', 'http://localhost:8200')
-VAULT_TOKEN = env_var('VAULT_TOKEN', 'myroot')
-VAULT_PATH = env_var('VAULT_PATH', '/data/auth_transactions')
+VAULT_URL = env_var("VAULT_URL", "http://localhost:8200")
+VAULT_TOKEN = env_var("VAULT_TOKEN", "myroot")
+VAULT_PATH = env_var("VAULT_PATH", "/data/auth_transactions")
