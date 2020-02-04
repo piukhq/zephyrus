@@ -116,8 +116,6 @@ class TestJwtAuth(TestCase):
         mock_decode.side_effect = jose.exceptions.ExpiredSignatureError
         mock_load_secrets.return_value = {"amex": {"client_id": "", "secret": "testsecret"}}
 
-        headers = {"Authorization": "token sdfsdf"}
-
         resp = self.simulate_post(self.amex_endpoint, json=self.payload, headers=self.headers)
         self.assertEqual(resp.status_code, 401)
         self.assertEqual(resp.json["name"], "AUTH_EXPIRED")
@@ -127,8 +125,6 @@ class TestJwtAuth(TestCase):
     def test_auth_decorator_fails_invalid_signature(self, mock_decode, mock_load_secrets):
         mock_decode.side_effect = jose.exceptions.JWTError
         mock_load_secrets.return_value = {"amex": {"client_id": "", "secret": "testsecret"}}
-
-        headers = {"Authorization": "token sdfsdf"}
 
         resp = self.simulate_post(self.amex_endpoint, json=self.payload, headers=self.headers)
         self.assertEqual(resp.status_code, 401)

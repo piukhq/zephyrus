@@ -4,8 +4,6 @@ from app import queue
 from app.amex import jwt_auth
 from app.security import generate_jwt
 
-auth_token = {}
-
 
 class AmexAuthView:
     @staticmethod

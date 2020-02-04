@@ -1,8 +1,4 @@
 import falcon
-import arrow
-import jose.jwt
-
-import settings
 
 
 def get_params(req: falcon.Request, *params):
