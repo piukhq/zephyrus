@@ -3,6 +3,7 @@ import falcon
 CLIENT_DOES_NOT_EXIST = "CLIENT_DOES_NOT_EXIST"
 INVALID_CLIENT_SECRET = "CLIENT_SECRET_DOES_NOT_MATCH"
 CONNECTION_ERROR = "CONNECTION_ERROR"
+CONFIGURATION_ERROR = "CONFIGURATION_ERROR"
 MISSING_PARAMS = "MISSING_PARAMS"
 MISSING_AUTH = "MISSING_AUTH"
 INVALID_AUTH_FORMAT = "INVALID_AUTH_FORMAT"
@@ -61,6 +62,11 @@ errors = {
         "message": "Authorisation settings have not been configured.",
         "code": falcon.HTTP_500,
     },
+    CONFIGURATION_ERROR: {
+        "name": "Configuration error",
+        "message": "There is an error with the configuration or it was not possible to retrieve.",
+        "code": "536"
+    }
 }
 
 

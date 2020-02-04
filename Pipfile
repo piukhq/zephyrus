@@ -15,9 +15,12 @@ redis = "*"
 falcon = "*"
 sentry-sdk = {extras = ["falcon"],version = "*"}
 kombu = "*"
+hvac = "*"
+shared-config-storage = {git = "ssh://git@git.bink.com/libs/shared-config-storage.git"}
 
 [dev-packages]
 pytest = "*"
 pytest-cov = "*"
 werkzeug = "*"
 mypy = "*"
+freezegun = "*"

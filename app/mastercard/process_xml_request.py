@@ -3,7 +3,7 @@ import falcon
 import lxml.etree as etree
 import sentry_sdk
 from OpenSSL.crypto import load_certificate, FILETYPE_PEM
-from azure.storage.blob import BlockBlobService
+from azure.storage.blob import BlobServiceClient
 from signxml import XMLVerifier, InvalidCertificate, InvalidSignature, InvalidDigest, InvalidInput
 from signxml.util import add_pem_header
 
@@ -80,7 +80,7 @@ def get_valid_signed_data_elements(binary_xml, pem_signing_cert):
 
 
 def azure_read_cert():
-    blob_service = BlockBlobService(account_name=settings.AZURE_ACCOUNT_NAME, account_key=settings.AZURE_ACCOUNT_KEY)
+    blob_service = BlobServiceClient(account_name=settings.AZURE_ACCOUNT_NAME, account_key=settings.AZURE_ACCOUNT_KEY)
     blob = blob_service.get_blob_to_text(
         settings.AZURE_CONTAINER,
         f"{settings.AZURE_CERTIFICATE_FOLDER.strip('/')}/{settings.MASTERCARD_CERTIFICATE_BLOB_NAME.strip('/')}",
