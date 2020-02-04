@@ -7,7 +7,6 @@ from cryptography.hazmat.primitives import hashes
 from signxml import XMLVerifier, XMLSigner, methods as sign_methods
 import lxml.etree as etree
 from azure.storage.blob import BlobServiceClient
-from azure.storage.blob import ContentSettings
 import settings
 import hashlib
 import base64
