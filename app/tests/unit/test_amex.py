@@ -3,10 +3,8 @@ from unittest import mock
 from falcon.testing import TestCase
 
 from app import create_app
-from app.clients import ClientInfo
 
 
-@mock.patch.object(ClientInfo, "get_client")
 @mock.patch("jose.jwt.decode")
 @mock.patch("app.queue.add")
 class TestAmex(TestCase):
@@ -27,9 +25,10 @@ class TestAmex(TestCase):
         super(TestAmex, self).setUp()
         self.app = create_app()
 
-    def test_process_auth_transaction_success(self, _, mock_decode, mock_get_client):
+    @mock.patch("app.amex.authentication.load_secrets")
+    def test_process_auth_transaction_success(self, _, mock_decode, mock_load_secrets):
+        mock_load_secrets.return_value = {"amex": {"client_id": "test123456789", "secret": "testsecret987654321"}}
         resp = self.simulate_post(self.amex_endpoint, json=self.payload, headers=self.headers)
 
         self.assertTrue(mock_decode.called)
-        self.assertTrue(mock_get_client.called)
         self.assertEqual(resp.status_code, 200)

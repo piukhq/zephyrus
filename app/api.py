@@ -5,7 +5,7 @@ from sentry_sdk.integrations.falcon import FalconIntegration
 
 import settings
 from app.errors import CustomException
-from app.amex import AmexAuthView, AmexMeView, AmexView
+from app.amex import AmexAuthView, AmexView
 from app.mastercard import MasterCardView
 from app.views import HealthCheck
 from app.visa import VisaView
@@ -44,7 +44,6 @@ def create_app() -> falcon.API:
     app.add_route("/auth_transactions/mastercard", MasterCardView)
     app.add_route("/healthz", HealthCheck())
     app.add_route("/auth_transactions/authorize", AmexAuthView)
-    app.add_route("/me", AmexMeView)
     app.add_route("/auth_transactions/amex", AmexView)
     app.add_route("/auth_transactions/mastercard", MasterCardView)
 

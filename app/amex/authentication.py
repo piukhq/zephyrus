@@ -2,9 +2,7 @@ from typing import TYPE_CHECKING
 
 import jose.exceptions
 import jose.jwt
-
-import settings
-from app.clients import ClientInfo
+from app.security import load_secrets
 from app.errors import (
     AuthException,
     MISSING_AUTH,
@@ -12,8 +10,6 @@ from app.errors import (
     INVALID_AUTH_TYPE,
     AUTH_EXPIRED,
     INVALID_AUTH_TOKEN,
-    CustomException,
-    CLIENT_DOES_NOT_EXIST,
 )
 
 if TYPE_CHECKING:
@@ -35,18 +31,12 @@ def jwt_auth(f):
             raise AuthException(INVALID_AUTH_TYPE, auth_type.title())
 
         try:
-            claims = jose.jwt.decode(
-                token, key=settings.SIGNATURE_SECRET, audience="https://api.bink.com", issuer="bink"
-            )
+            client_secrets = load_secrets()
+            jose.jwt.decode(token, key=client_secrets["amex"]["secret"], audience="https://api.bink.com", issuer="bink")
         except jose.exceptions.ExpiredSignatureError as e:
             raise AuthException(AUTH_EXPIRED) from e
         except jose.exceptions.JWTError as e:
             raise AuthException(INVALID_AUTH_TOKEN) from e
-
-        try:
-            req.context.client = ClientInfo.get_client(claims["sub"])
-        except CustomException:
-            raise AuthException(CLIENT_DOES_NOT_EXIST)
 
         return f(f, req, resp, *args, **kwargs)
 

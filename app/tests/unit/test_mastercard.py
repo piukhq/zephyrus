@@ -29,7 +29,7 @@ class MasterCardAuthTestCases(TestCase):
         # common name used in that certificate.
         # during tests the certificate above is used to mock the sign process MasterCard will do
         # The signed XML is validated against the signed xml produced  simulating the message sent to us.
-        # get_certificate_details gets the signing certifcate and common name which is normally stored on azure.
+        # get_certificate_details gets the signing certificate and common name which is normally stored on azure.
         cls.cert = Certificate()
 
     def setUp(self):
