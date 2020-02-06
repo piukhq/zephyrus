@@ -4,7 +4,7 @@ import jose
 import requests
 
 from shared_config_storage.vault.secrets import VaultError, read_vault
-from settings import VAULT_TOKEN, VAULT_URL, VAULT_PATH
+from settings import VAULT_TOKEN, VAULT_URL
 
 _client_info = None
 
@@ -13,10 +13,9 @@ def load_secrets():
 
     global _client_info
 
-    logging.info(f"Obtain secrets from vault at {VAULT_URL}  secrets: {VAULT_PATH}")
     try:
         if _client_info is None:
-            _client_info = read_vault(VAULT_PATH, VAULT_URL, VAULT_TOKEN)
+            _client_info = read_vault("/data/auth_transactions", VAULT_URL, VAULT_TOKEN)
     except requests.RequestException as e:
         logging.exception(f"Unable to request the secrets from the Vault. {e}")
         raise VaultError(f"Unable to request the secrets from the Vault {e}") from e
