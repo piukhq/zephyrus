@@ -61,12 +61,6 @@ Iaw=
 
 - `SERVICE_API_KEY`
   - String Value, Auth API Key for communication between services.
-- `REDIS_HOST`
-  - String Value, IP or FQDN of REDIS
-- `REDIS_PORT`
-  - String Value, Port for REDIS
-- `REDIS_PASSWORD`
-  - String Value, Password for REDIS
 - `HERMES_URL`
   - String Value, URL for Hermes
 - `CLIENT_INFO_STORAGE_TIMEOUT`
@@ -82,3 +76,8 @@ Iaw=
   - This is the first part of the Azure path which when combined with the MASTERCARD_CERTIFICATE_BLOB_NAME provides the full path to the location the certificate must be uploaded.
 - `MASTERCARD_CERTIFICATE_BLOB_NAME`
   - The file name or end part of path specific to Mastercard defaults to "mc_perm_cert"
+- `VAULT_URL`
+  - String value, URL to Hashicorp Vault
+- `VAULT_TOKEN`
+  - String value, Access token for Hashicorp Vault. Obtained from Kubernetes secrets.
+
