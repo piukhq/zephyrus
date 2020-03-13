@@ -22,21 +22,22 @@ def load_secrets():
     return _client_info
 
 
-def generate_jwt(slug):
+def generate_jwt(slug, credentails):
     client_secrets = load_secrets()
     client_id = client_secrets[slug].get("client_id", "").strip()
     secret = client_secrets[slug].get("secret", "").strip()
 
-    if client_id and secret:
-        time_now = arrow.now()
-        claims = {
-            "exp": time_now.shift(minutes=+5).timestamp,
-            "nbf": time_now.timestamp,
-            "iss": "bink",
-            "aud": "https://api.bink.com",
-            "iat": time_now.timestamp,
-            "sub": client_id,
-        }
-        return jose.jwt.encode(claims, key=secret)
-    else:
+    if credentails["client_id"] != client_id or credentails["client_secret"] != secret:
         return None
+
+    time_now = arrow.now()
+    claims = {
+        "exp": time_now.shift(minutes=+5).timestamp,
+        "nbf": time_now.timestamp,
+        "iss": "bink",
+        "aud": "https://api.bink.com",
+        "iat": time_now.timestamp,
+        "sub": client_id,
+    }
+    return jose.jwt.encode(claims, key=secret)
+
