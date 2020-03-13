@@ -40,4 +40,3 @@ def generate_jwt(slug, credentails):
         "sub": client_id,
     }
     return jose.jwt.encode(claims, key=secret)
-
