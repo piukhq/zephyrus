@@ -6,7 +6,7 @@ from falcon.testing import TestCase
 from freezegun import freeze_time
 from shared_config_storage.vault.secrets import VaultError  # noqa
 from app import create_app
-from app.security import generate_jwt, load_secrets
+from app.security import generate_jwt, load_secrets, validate_credentials
 
 
 @mock.patch("app.queue.add")
@@ -45,13 +45,41 @@ class TestJwtAuth(TestCase):
         mock_load_secrets.return_value = {"amex": {"client_id": "", "secret": "testsecret"}}
         payload_error = {"client_id": "", "client_secret": "testsecret"}
         resp = self.simulate_post(self.amex_auth_end_point, json=payload_error, headers={})
-        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(resp.status_code, 403)
+
+    def test_validate_credentials_success(self, _):
+        payload_error = {"client_id": "testid", "client_secret": "testsecret"}
+        vault_client_id = "testid"
+        vault_secret = "testsecret"
+        credentials_valid = validate_credentials(payload_error, vault_client_id, vault_secret)
+        self.assertTrue(credentials_valid)
+
+    def test_validate_credentials_blank_client_id(self, _):
+        payload_error = {"client_id": "", "client_secret": "testsecret"}
+        vault_client_id = "vclientid"
+        vault_secret = "testsecret"
+        credentials_valid = validate_credentials(payload_error, vault_client_id, vault_secret)
+        self.assertFalse(credentials_valid)
+
+    def test_validate_credentials_client_id_None(self, _):
+        payload_error = {"client_id": None, "client_secret": "testsecret"}
+        vault_client_id = "vclientid"
+        vault_secret = "testsecret"
+        credentials_valid = validate_credentials(payload_error, vault_client_id, vault_secret)
+        self.assertFalse(credentials_valid)
+
+    def test_validate_credentials_client_id_not_matching(self, _):
+        payload_error = {"client_id": "None", "client_secret": "testsecret"}
+        vault_client_id = "vclientid"
+        vault_secret = "testsecret"
+        credentials_valid = validate_credentials(payload_error, vault_client_id, vault_secret)
+        self.assertFalse(credentials_valid)
 
     @mock.patch("app.security.load_secrets")
     @freeze_time("2020-02-21")
     def test_generate_jwt(self, mock_load_secrets, _):
         mock_load_secrets.return_value = {"amex": {"client_id": "testid", "secret": "testsecret"}}
-        token = generate_jwt("amex")
+        token = generate_jwt("amex", self.payload)
 
         jwt = jose.jwt.decode(token, "testsecret", audience="https://api.bink.com", issuer="bink")
 
@@ -61,7 +89,7 @@ class TestJwtAuth(TestCase):
     @freeze_time("2020-02-21")
     def test_generate_jwt_error(self, mock_load_secrets, _):
         mock_load_secrets.return_value = {"amex": {"client_id": "", "secret": "testsecret"}}
-        token = generate_jwt("amex")
+        token = generate_jwt("amex", self.payload)
 
         self.assertEqual(token, None)
 
