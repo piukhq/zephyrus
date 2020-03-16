@@ -44,8 +44,12 @@ def generate_jwt(slug, credentials):
 
 def validate_credentials(credentials, vault_client_id, vault_secret):
     is_valid = False
-    if (credentials["client_id"] and credentials["client_id"].strip() and
-            credentials["client_secret"] and credentials["client_secret"].strip()):
+    if (
+        credentials["client_id"]
+        and credentials["client_id"].strip()
+        and credentials["client_secret"]
+        and credentials["client_secret"].strip()
+    ):
         if credentials["client_id"] == vault_client_id and credentials["client_secret"] == vault_secret:
             is_valid = True
     return is_valid
