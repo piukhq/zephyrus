@@ -75,7 +75,6 @@ class TestJwtAuth(TestCase):
         credentials_valid = validate_credentials(payload_error, vault_client_id, vault_secret)
         self.assertFalse(credentials_valid)
 
-
     @mock.patch("app.security.load_secrets")
     @freeze_time("2020-02-21")
     def test_generate_jwt(self, mock_load_secrets, _):
