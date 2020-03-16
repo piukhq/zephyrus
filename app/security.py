@@ -22,12 +22,12 @@ def load_secrets():
     return _client_info
 
 
-def generate_jwt(slug, credentails):
+def generate_jwt(slug, credentials):
     client_secrets = load_secrets()
     client_id = client_secrets[slug].get("client_id", "").strip()
     secret = client_secrets[slug].get("secret", "").strip()
 
-    if credentails["client_id"] != client_id or credentails["client_secret"] != secret:
+    if not validate_credentials(credentials, client_id, secret):
         return None
 
     time_now = arrow.now()
@@ -40,3 +40,12 @@ def generate_jwt(slug, credentails):
         "sub": client_id,
     }
     return jose.jwt.encode(claims, key=secret)
+
+
+def validate_credentials(credentials, vault_client_id, vault_secret):
+    is_valid = False
+    if (credentials["client_id"] and credentials["client_id"].strip() and
+            credentials["client_secret"] and credentials["client_secret"].strip()):
+        if credentials["client_id"] == vault_client_id and credentials["client_secret"] == vault_secret:
+            is_valid = True
+    return is_valid
