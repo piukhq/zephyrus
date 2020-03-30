@@ -26,7 +26,6 @@ MASTERCARD_CERTIFICATE_BLOB_NAME = env_var("MASTERCARD_CERTIFICATE_BLOB_NAME", "
 
 SENTRY_DSN = env_var("SENTRY_DSN")
 
-AMQP_QUEUE = env_var("AMQP_QUEUE", "auth-transactions")
 AMQP_USER = env_var("AMQP_USER", "guest")
 AMQP_PASSWORD = env_var("AMQP_PASSWORD", "guest")
 AMQP_HOST = env_var("AMQP_HOST", "localhost")
