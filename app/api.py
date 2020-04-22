@@ -28,7 +28,7 @@ def create_app() -> falcon.API:
     app = falcon.API()
 
     if settings.SENTRY_DSN:
-        sentry_sdk.init(dsn=settings.SENTRY_DSN, integrations=[FalconIntegration()])
+        sentry_sdk.init(dsn=settings.SENTRY_DSN, environment=settings.SENTRY_ENV, integrations=[FalconIntegration()])
 
     app.add_error_handler(CustomException, handle_custom_exception)
     app.req_options.media_handlers = Handlers(
