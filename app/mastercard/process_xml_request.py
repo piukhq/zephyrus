@@ -2,7 +2,7 @@ import arrow
 import falcon
 import lxml.etree as etree
 import sentry_sdk
-import logging
+
 from OpenSSL.crypto import load_certificate, FILETYPE_PEM
 from azure.storage.blob import BlobServiceClient
 from signxml import XMLVerifier, InvalidCertificate, InvalidSignature, InvalidDigest, InvalidInput
@@ -107,7 +107,7 @@ def mastercard_request(xml_data):
     response_xml = ""
 
     if not pem_signing_cert:
-        return response_xml, mc_data, f"Mastercard Cert Error: {e}", falcon.HTTP_403
+        return response_xml, mc_data, f"Mastercard Cert Error", falcon.HTTP_403
 
     try:
         # To ensure we always return an identical format we can remove the signature from the document

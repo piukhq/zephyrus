@@ -96,7 +96,7 @@ class TestJwtAuth(TestCase):
     @mock.patch("app.security.read_vault", autospec=True)
     def test_load_secrets(self, mock_read_vault, _):
         mock_read_vault.return_value = {"amex": {"client_id": "testid", "secret": "testsecret"}}
-        secret = load_secrets()
+        secret = load_secrets("/data/auth_transactions")
         self.assertTrue(mock_read_vault.called)
         self.assertEqual(secret["amex"]["client_id"], "testid")
 
