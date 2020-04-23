@@ -38,7 +38,7 @@ class MasterCardAuthTestCases(TestCase):
 
     def test_valid_transaction_response(self, _):
         signed_xml = SignedXML(MockMastercardAuthTransaction(), signing_cert=self.cert)
-        with patch("app.mastercard.process_xml_request.azure_read_cert") as mock_certificate:
+        with patch("app.mastercard.process_xml_request.read_vault_cert") as mock_certificate:
             mock_certificate.return_value = signed_xml.mock_signing_certificate()
             resp = self.simulate_post(self.mastercard_endpoint, body=signed_xml.xml, headers=self.headers)
         self.assertTrue(valid_transaction_xml(resp.json), "Invalid XML response")
@@ -46,7 +46,7 @@ class MasterCardAuthTestCases(TestCase):
 
     def test_invalid_transaction_response_to_wrong_cert(self, _):
         signed_xml = SignedXML(MockMastercardAuthTransaction(), signing_cert=self.cert)
-        with patch("app.mastercard.process_xml_request.azure_read_cert") as mock_certificate:
+        with patch("app.mastercard.process_xml_request.read_vault_cert") as mock_certificate:
             cert = Certificate()
             mock_certificate.return_value = cert.root_pem_certificate
             resp = self.simulate_post(self.mastercard_endpoint, body=signed_xml.xml, headers=self.headers)
@@ -59,7 +59,7 @@ class MasterCardAuthTestCases(TestCase):
         print(xml_obj.xml)
         signed_xml = SignedXML(xml_obj.get_transaction(), signing_cert=self.cert)
 
-        with patch("app.mastercard.process_xml_request.azure_read_cert") as mock_certificate:
+        with patch("app.mastercard.process_xml_request.read_vault_cert") as mock_certificate:
             cert = Certificate()
             mock_certificate.return_value = cert.root_pem_certificate
             resp = self.simulate_post(self.mastercard_endpoint, body=signed_xml.xml, headers=self.headers)
@@ -86,7 +86,7 @@ class MasterCardAuthTestCases(TestCase):
         )
         signed_xml = SignedXML(trans, signing_cert=self.cert)
         tampered_xml = signed_xml.xml.decode("utf8").replace("0.45", "500")
-        with patch("app.mastercard.process_xml_request.azure_read_cert") as mock_certificate:
+        with patch("app.mastercard.process_xml_request.read_vault_cert") as mock_certificate:
             cert = Certificate()
             mock_certificate.return_value = cert.root_pem_certificate
             resp = self.simulate_post(self.mastercard_endpoint, body=tampered_xml.encode("utf8"), headers=self.headers)
@@ -95,7 +95,7 @@ class MasterCardAuthTestCases(TestCase):
 
     def test_xml_mastercard_processing(self, _):
         signed_xml = SignedXML(MockMastercardAuthTransaction(), signing_cert=self.cert)
-        with patch("app.mastercard.process_xml_request.azure_read_cert") as mock_certificate:
+        with patch("app.mastercard.process_xml_request.read_vault_cert") as mock_certificate:
             mock_certificate.return_value = signed_xml.mock_signing_certificate()
             return_xml, mc_data, message, code = mastercard_request(signed_xml.xml)
         self.assertEquals(message, None)
@@ -129,7 +129,7 @@ class MasterCardAuthTestCases(TestCase):
             digest="oh5jTf3ufNbKvfE8WzsssHce95E=",
         )
         signed_xml = SignedXML(trans, signing_cert=self.cert)
-        with patch("app.mastercard.process_xml_request.azure_read_cert") as mock_certificate:
+        with patch("app.mastercard.process_xml_request.read_vault_cert") as mock_certificate:
             mock_certificate.return_value = signed_xml.mock_signing_certificate()
             return_xml, mc_data, message, code = mastercard_request(signed_xml.xml)
         self.assertEquals(message, None)
@@ -147,7 +147,7 @@ class MasterCardAuthTestCases(TestCase):
     def test_xml_mastercard_processing_tampered_message(self, _):
         signed_xml = SignedXML(MockMastercardAuthTransaction(trans_amt="0.45"), signing_cert=self.cert)
         tampered_xml = signed_xml.xml.decode("utf8").replace("0.45", "500")
-        with patch("app.mastercard.process_xml_request.azure_read_cert") as mock_certificate:
+        with patch("app.mastercard.process_xml_request.read_vault_cert") as mock_certificate:
             mock_certificate.return_value = signed_xml.mock_signing_certificate()
             return_xml, mc_data, message, code = mastercard_request(tampered_xml.encode("utf8"))
         self.assertEqual(mc_data, {})
@@ -156,7 +156,7 @@ class MasterCardAuthTestCases(TestCase):
 
     def test_xml_mastercard_processing_wrong_certificate(self, _):
         signed_xml = SignedXML(MockMastercardAuthTransaction(trans_amt="0.45"), signing_cert=self.cert)
-        with patch("app.mastercard.process_xml_request.azure_read_cert") as mock_certificate:
+        with patch("app.mastercard.process_xml_request.read_vault_cert") as mock_certificate:
             cert = Certificate()
             mock_certificate.return_value = cert.root_pem_certificate
             return_xml, mc_data, message, code = mastercard_request(signed_xml.xml)

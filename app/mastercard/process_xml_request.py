@@ -2,10 +2,12 @@ import arrow
 import falcon
 import lxml.etree as etree
 import sentry_sdk
+import logging
 from OpenSSL.crypto import load_certificate, FILETYPE_PEM
 from azure.storage.blob import BlobServiceClient
 from signxml import XMLVerifier, InvalidCertificate, InvalidSignature, InvalidDigest, InvalidInput
 from signxml.util import add_pem_header
+from app.security import load_secrets
 
 import settings
 from app.errors import CustomException
@@ -90,10 +92,23 @@ def azure_read_cert():
     return blob_stream.readall()
 
 
+def read_vault_cert():
+    secret = load_secrets("data/auth_certs/mastercard")
+    if secret:
+        return secret["cert"]
+    else:
+        sentry_sdk.capture_message(f"Unable to obtain the certificate for Mastercard loaded from the Vault.")
+        return None
+
+
 def mastercard_request(xml_data):
     mc_data = {}
-    pem_signing_cert = azure_read_cert()
+    pem_signing_cert = read_vault_cert()
     response_xml = ""
+
+    if not pem_signing_cert:
+        return response_xml, mc_data, f"Mastercard Cert Error: {e}", falcon.HTTP_403
+
     try:
         # To ensure we always return an identical format we can remove the signature from the document
         # using string methods:

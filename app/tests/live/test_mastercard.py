@@ -100,7 +100,7 @@ aAG+jyCgkD+KLThilZZ2hr8FohXt7UFKFx69MQdIudd9wn0MXpu8LDR6ri8mcjA6
 cert = Certificate()
 signed_xml = SignedXML(MockMastercardAuthTransaction(), signing_cert=cert)
 resp = requests.post(
-    "https://api.bink-dev.com/auth_transactions/mastercard",
+    "https://api.dev.gb.bink.com/auth_transactions/mastercard",
     headers={"Content-Type": "application/xml"},
     data=signed_xml.xml,
 )

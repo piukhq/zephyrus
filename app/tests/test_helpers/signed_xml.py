@@ -93,7 +93,7 @@ class SignedXML(BasicXML):
         """
         This is the self signed certificate and common name as we expect to be
         supplied by Mastercard and placed in settings.  This is used to mock
-        out mastercard.process_xml_request.azure_read_cert which normally
+        out mastercard.process_xml_request.read_vault_cert which normally
         returns the pem formated certificate
 
         Note the signed xml will also have a certificate created using this public
