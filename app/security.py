@@ -23,7 +23,7 @@ def load_secrets(vault_path: str):
 
 
 def generate_jwt(slug, credentials):
-    client_secrets = load_secrets()
+    client_secrets = load_secrets("/data/auth_transactions")
     client_id = client_secrets[slug].get("client_id", "").strip()
     secret = client_secrets[slug].get("secret", "").strip()
 
