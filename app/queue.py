@@ -17,5 +17,5 @@ def add(message: dict, *, provider: str) -> None:
         conn.ensure_connection(
             errback=_on_error, max_retries=3, interval_start=0.2, interval_step=0.4, interval_max=1, timeout=3
         )
-        q = conn.SimpleQueue(settings.AMQP_QUEUE)
+        q = conn.SimpleQueue(provider)
         q.put(message, headers={"X-Provider": provider})

@@ -6,8 +6,7 @@ from cryptography.x509.oid import NameOID
 from cryptography.hazmat.primitives import hashes
 from signxml import XMLVerifier, XMLSigner, methods as sign_methods
 import lxml.etree as etree
-from azure.storage.blob import BlockBlobService
-from azure.storage.blob import ContentSettings
+from azure.storage.blob import BlobServiceClient
 import settings
 import hashlib
 import base64
@@ -94,7 +93,7 @@ class SignedXML(BasicXML):
         """
         This is the self signed certificate and common name as we expect to be
         supplied by Mastercard and placed in settings.  This is used to mock
-        out mastercard.process_xml_request.azure_read_cert which normally
+        out mastercard.process_xml_request.read_vault_cert which normally
         returns the pem formated certificate
 
         Note the signed xml will also have a certificate created using this public
@@ -328,10 +327,9 @@ def valid_transaction_xml(xml):
 
 
 def azure_write(file, text):
-    blob_service = BlockBlobService(account_name=settings.AZURE_ACCOUNT_NAME, account_key=settings.AZURE_ACCOUNT_KEY)
-    blob_service.create_blob_from_text(
+    blob_service = BlobServiceClient(account_name=settings.AZURE_ACCOUNT_NAME, account_key=settings.AZURE_ACCOUNT_KEY)
+    blob_client = blob_service.get_blob_client(
         settings.AZURE_CONTAINER,
         f"{settings.AZURE_CERTIFICATE_FOLDER.strip('/')}/{settings.MASTERCARD_CERTIFICATE_BLOB_NAME.strip('/')}",
-        text,
-        content_settings=ContentSettings(content_type="application/text"),
     )
+    blob_client.upload_blob(text, blob_type="BlockBlob")

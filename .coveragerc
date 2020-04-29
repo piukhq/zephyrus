@@ -1,8 +1,10 @@
 [run]
 omit = *test*
        manage.py
+       app/amex/utils.py
+       app/schema.py
 
 branch = True
 
 [report]
-fail_under = 85
+fail_under = 80
