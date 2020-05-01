@@ -93,7 +93,7 @@ def azure_read_cert():
 
 
 def read_vault_cert():
-    secret = load_secrets("data/auth_certs/mastercard")
+    secret = load_secrets("/data/auth_certs/mastercard")
     if secret:
         return secret["cert"]
     else:
