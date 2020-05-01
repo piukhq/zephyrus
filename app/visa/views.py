@@ -9,5 +9,5 @@ class VisaView:
             provider = "visa-auth"
         else:
             provider = "visa-settlement"
-        queue.add(req.media, provider=provider)
+        queue.add(req.media, provider="visa", queue_name=provider)
         resp.media = {"error_msg": "", "status_code": "0"}
