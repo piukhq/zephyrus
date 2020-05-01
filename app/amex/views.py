@@ -19,5 +19,5 @@ class AmexAuthView:
 class AmexView:
     @jwt_auth
     def on_post(self, req: falcon.Request, resp: falcon.Response):
-        queue.add(req.media, provider="amex-auth")
+        queue.add(req.media, provider="amex", queue_name="amex-auth")
         resp.media = {"success": True}
