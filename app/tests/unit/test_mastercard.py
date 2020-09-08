@@ -38,9 +38,7 @@ class MasterCardAuthTestCases(TestCase):
 
     def test_valid_transaction_response(self, _):
         signed_xml = SignedXML(MockMastercardAuthTransaction(), signing_cert=self.cert)
-        with patch("app.mastercard.process_xml_request.read_vault_cert") as mock_certificate:
-            mock_certificate.return_value = signed_xml.mock_signing_certificate()
-            resp = self.simulate_post(self.mastercard_endpoint, body=signed_xml.xml, headers=self.headers)
+        resp = self.simulate_post(self.mastercard_endpoint, body=signed_xml.xml, headers=self.headers)
         self.assertTrue(valid_transaction_xml(resp.json), "Invalid XML response")
         self.assertEqual(resp.status_code, 200)
 
@@ -197,3 +195,5 @@ class MasterCardAuthTestCases(TestCase):
             if element.tag in trans.tags_list:
                 self.assertEqual(getattr(trans, trans.args_list[count]), element.text)
                 count += 1
+
+
