@@ -118,7 +118,7 @@ class SignedXML(BasicXML):
 
 
 class Certificate:
-    def __init__(self):
+    def __init__(self, public_key=None):
         self.common_name = "mysite.com"
         self.cert_subject = self.issuer = x509.Name(
             [
@@ -131,7 +131,11 @@ class Certificate:
         )
 
         self.private_key = self.make_private_key()
-        self.public_key = self.private_key.public_key()
+        if public_key:
+            self.public_key = public_key
+        else:
+            self.public_key = self.private_key.public_key()
+
         self.root_cert = self.make_root_certificate()
 
     @staticmethod
@@ -333,3 +337,11 @@ def azure_write(file, text):
         f"{settings.AZURE_CERTIFICATE_FOLDER.strip('/')}/{settings.MASTERCARD_CERTIFICATE_BLOB_NAME.strip('/')}",
     )
     blob_client.upload_blob(text, blob_type="BlockBlob")
+
+
+def get_signing_cert(xml_tree_root):
+    namespaces = {'ds': 'http://www.w3.org/2000/09/xmldsig#'}
+    certificate_xml = xml_tree_root.find('/ds:Signature/ds:KeyInfo/ds:X509Data/ds:X509Certificate', namespaces)
+    pem_signing_cert = certificate_xml.text
+
+    return pem_signing_cert

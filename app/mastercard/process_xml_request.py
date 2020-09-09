@@ -7,6 +7,7 @@ from OpenSSL.crypto import load_certificate, FILETYPE_PEM
 from signxml import XMLVerifier, InvalidCertificate, InvalidSignature, InvalidDigest, InvalidInput
 from signxml.util import add_pem_header
 from app.errors import CustomException
+from app.tests.test_helpers.signed_xml import get_signing_cert
 
 
 def mastercard_signed_xml_response(func):
@@ -105,10 +106,7 @@ def mastercard_request(xml_data):
         response_xml = remove_from_xml_string(xml_data.decode("utf8"), "<ds:Signature", "/ds:Signature>")
         xml_doc = etree.fromstring(xml_data)
         xml_tree_root = etree.ElementTree(xml_doc)
-        namespaces = {'ds': 'http://www.w3.org/2000/09/xmldsig#'}
-        certificate_xml = xml_tree_root.find('/ds:Signature/ds:KeyInfo/ds:X509Data/ds:X509Certificate', namespaces)
-        pem_signing_cert = certificate_xml.text
-
+        pem_signing_cert = get_signing_cert(xml_tree_root)
         valid_data_elements = get_valid_signed_data_elements(xml_tree_root, pem_signing_cert)
 
         # need for hermes 'time', 'amount', 'mid', 'third_party_id', 'auth_code', 'currency_code', 'payment_card_token'
