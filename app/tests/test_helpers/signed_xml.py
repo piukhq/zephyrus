@@ -340,8 +340,8 @@ def azure_write(file, text):
 
 
 def get_signing_cert(xml_tree_root):
-    namespaces = {'ds': 'http://www.w3.org/2000/09/xmldsig#'}
-    certificate_xml = xml_tree_root.find('/ds:Signature/ds:KeyInfo/ds:X509Data/ds:X509Certificate', namespaces)
+    namespaces = {"ds": "http://www.w3.org/2000/09/xmldsig#"}
+    certificate_xml = xml_tree_root.find("/ds:Signature/ds:KeyInfo/ds:X509Data/ds:X509Certificate", namespaces)
     pem_signing_cert = certificate_xml.text
 
     return pem_signing_cert
