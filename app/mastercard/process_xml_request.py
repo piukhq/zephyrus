@@ -7,7 +7,6 @@ from OpenSSL.crypto import load_certificate, FILETYPE_PEM
 from signxml import XMLVerifier, InvalidCertificate, InvalidSignature, InvalidDigest, InvalidInput
 from signxml.util import add_pem_header
 from app.errors import CustomException
-from app.tests.test_helpers.signed_xml import get_signing_cert
 
 
 def mastercard_signed_xml_response(func):
@@ -52,24 +51,6 @@ def remove_from_xml_string(xml_string, start_string, end_string):
             if end <= start:
                 raise ValueError
         return "{}{}".format(xml_string[:start], xml_string[end:])
-    except ValueError:
-        return ""
-
-
-def certificate_from_xml_string(xml_string, start_string, end_string):
-    end = 0
-    try:
-        start = xml_string.find(start_string) + len(start_string)
-        end = xml_string.find(end_string)
-        certificate = xml_string[start:end]
-
-        # start = xml_string.index(start_string)
-        # if 0 < start < len(xml_string):
-        #     end = xml_string.index(end_string, start) + len(end_string)
-        #     if end <= start:
-        #         raise ValueError
-        # # test = "{}{}".format(xml_string[start:], xml_string[:end])
-        return certificate
     except ValueError:
         return ""
 
@@ -146,3 +127,11 @@ def mastercard_request(xml_data):
     except (InvalidCertificate, InvalidSignature, InvalidDigest) as e:
         sentry_sdk.capture_exception(e)
         return response_xml, mc_data, f"Error {e}", falcon.HTTP_403
+
+
+def get_signing_cert(xml_tree_root):
+    namespaces = {"ds": "http://www.w3.org/2000/09/xmldsig#"}
+    certificate_xml = xml_tree_root.find("/ds:Signature/ds:KeyInfo/ds:X509Data/ds:X509Certificate", namespaces)
+    pem_signing_cert = certificate_xml.text
+
+    return pem_signing_cert
