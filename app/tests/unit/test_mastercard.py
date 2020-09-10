@@ -189,4 +189,3 @@ class MasterCardAuthTestCases(TestCase):
             if element.tag in trans.tags_list:
                 self.assertEqual(getattr(trans, trans.args_list[count]), element.text)
                 count += 1
-
