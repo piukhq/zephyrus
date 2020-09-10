@@ -337,4 +337,3 @@ def azure_write(file, text):
         f"{settings.AZURE_CERTIFICATE_FOLDER.strip('/')}/{settings.MASTERCARD_CERTIFICATE_BLOB_NAME.strip('/')}",
     )
     blob_client.upload_blob(text, blob_type="BlockBlob")
-
