@@ -190,4 +190,3 @@ class MasterCardAuthTestCases(TestCase):
                 self.assertEqual(getattr(trans, trans.args_list[count]), element.text)
                 count += 1
 
-
