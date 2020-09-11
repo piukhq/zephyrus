@@ -4,12 +4,8 @@ import lxml.etree as etree
 import sentry_sdk
 
 from OpenSSL.crypto import load_certificate, FILETYPE_PEM
-from azure.storage.blob import BlobServiceClient
 from signxml import XMLVerifier, InvalidCertificate, InvalidSignature, InvalidDigest, InvalidInput
 from signxml.util import add_pem_header
-from app.security import load_secrets
-
-import settings
 from app.errors import CustomException
 
 
@@ -81,41 +77,17 @@ def get_valid_signed_data_elements(binary_xml, pem_signing_cert):
     return assertion_data_elements
 
 
-def azure_read_cert():
-    blob_service = BlobServiceClient(account_name=settings.AZURE_ACCOUNT_NAME, account_key=settings.AZURE_ACCOUNT_KEY)
-    blob_client = blob_service.get_blob_client(
-        settings.AZURE_CONTAINER,
-        f"{settings.AZURE_CERTIFICATE_FOLDER.strip('/')}/{settings.MASTERCARD_CERTIFICATE_BLOB_NAME.strip('/')}",
-    )
-    blob_stream = blob_client.download_blob()
-
-    return blob_stream.readall()
-
-
-def read_vault_cert():
-    secret = load_secrets("/data/auth_certs/mastercard")
-    if secret:
-        return secret["cert"]
-    else:
-        sentry_sdk.capture_message(f"Unable to obtain the certificate for Mastercard loaded from the Vault.")
-        return None
-
-
 def mastercard_request(xml_data):
     mc_data = {}
-    pem_signing_cert = read_vault_cert()
     response_xml = ""
-
-    if not pem_signing_cert:
-        return response_xml, mc_data, f"Mastercard Cert Error", falcon.HTTP_403
 
     try:
         # To ensure we always return an identical format we can remove the signature from the document
         # using string methods:
         response_xml = remove_from_xml_string(xml_data.decode("utf8"), "<ds:Signature", "/ds:Signature>")
-
         xml_doc = etree.fromstring(xml_data)
         xml_tree_root = etree.ElementTree(xml_doc)
+        pem_signing_cert = get_signing_cert(xml_tree_root)
         valid_data_elements = get_valid_signed_data_elements(xml_tree_root, pem_signing_cert)
 
         # need for hermes 'time', 'amount', 'mid', 'third_party_id', 'auth_code', 'currency_code', 'payment_card_token'
@@ -155,3 +127,11 @@ def mastercard_request(xml_data):
     except (InvalidCertificate, InvalidSignature, InvalidDigest) as e:
         sentry_sdk.capture_exception(e)
         return response_xml, mc_data, f"Error {e}", falcon.HTTP_403
+
+
+def get_signing_cert(xml_tree_root):
+    namespaces = {"ds": "http://www.w3.org/2000/09/xmldsig#"}
+    certificate_xml = xml_tree_root.find("/ds:Signature/ds:KeyInfo/ds:X509Data/ds:X509Certificate", namespaces)
+    pem_signing_cert = certificate_xml.text
+
+    return pem_signing_cert
