@@ -123,8 +123,6 @@ class MasterCardAuthTestCases(TestCase):
             digest="oh5jTf3ufNbKvfE8WzsssHce95E=",
         )
         signed_xml = SignedXML(trans, signing_cert=self.cert)
-        # with patch("app.mastercard.process_xml_request.read_vault_cert") as mock_certificate:
-        #     mock_certificate.return_value = signed_xml.mock_signing_certificate()
         return_xml, mc_data, message, code = mastercard_request(signed_xml.xml)
         self.assertEqual(message, None)
         self.assertEqual(code, falcon.HTTP_200)
