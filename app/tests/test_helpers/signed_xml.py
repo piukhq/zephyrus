@@ -118,7 +118,7 @@ class SignedXML(BasicXML):
 
 
 class Certificate:
-    def __init__(self):
+    def __init__(self, public_key=None):
         self.common_name = "mysite.com"
         self.cert_subject = self.issuer = x509.Name(
             [
@@ -131,7 +131,11 @@ class Certificate:
         )
 
         self.private_key = self.make_private_key()
-        self.public_key = self.private_key.public_key()
+        if public_key:
+            self.public_key = public_key
+        else:
+            self.public_key = self.private_key.public_key()
+
         self.root_cert = self.make_root_certificate()
 
     @staticmethod
