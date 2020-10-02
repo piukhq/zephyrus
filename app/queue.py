@@ -1,4 +1,5 @@
 import logging
+from typing import Tuple
 
 from kombu import Connection
 
@@ -19,3 +20,16 @@ def add(message: dict, *, provider: str, queue_name: str) -> None:
         )
         q = conn.SimpleQueue(queue_name)
         q.put(message, headers={"X-Provider": provider})
+
+
+def is_available() -> Tuple[bool, str]:
+    status, error_msg = True, ""
+
+    try:
+        with Connection(settings.AMQP_DSN, connect_timeout=3) as conn:
+            assert conn.connected
+    except Exception as err:
+        status = False
+        error_msg = f"Failed to connect to queue, err: {err}"
+
+    return status, error_msg

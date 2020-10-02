@@ -1,9 +1,26 @@
-from typing import TYPE_CHECKING
+import json
+from app import queue
 
-if TYPE_CHECKING:
-    import falcon
+import falcon
 
 
 class HealthCheck:
-    def on_get(self, req: "falcon.Request", resp: "falcon.Response"):
+    def on_get(self, req: falcon.Request, resp: falcon.Response):
         resp.media = ""
+
+
+class LivezCheck:
+    def on_get(self, req: falcon.Request, resp: falcon.Response):
+        resp.media = ""
+        resp.status = falcon.HTTP_204
+
+
+class ReadyzCheck:
+    def on_get(self, req: falcon.Request, resp: falcon.Response):
+        resp.media = ""
+        resp.status = falcon.HTTP_204
+
+        ok, err = queue.is_available()
+        if not ok:
+            resp.status = falcon.HTTP_500
+            resp.media = json.dumps({"error": err})
