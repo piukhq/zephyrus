@@ -3,6 +3,7 @@ import sys
 
 import settings
 from app import create_app
+from app.prometheus import start_pushgateway_thread
 
 app = create_app()
 
@@ -14,6 +15,8 @@ if __name__ == "__main__":
         sys.exit(-1)
 
     in_debugger = bool(os.getenv("DEBUGGING"))
+
+    start_pushgateway_thread(settings.PROMETHEUS_PUSH_GATEWAY, settings.PROMETHEUS_JOB)
 
     werkzeug.serving.run_simple(
         hostname=settings.DEV_HOST,

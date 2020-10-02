@@ -1,9 +1,11 @@
 import falcon
 from app import queue
+from app.prometheus import counters
 
 
 class VisaView:
     def on_post(self, req: falcon.Request, resp: falcon.Response):
+        counters["visa"].inc()
         user_fields_collection = req.media.get("UserDefinedFieldsCollection")
         if user_fields_collection and user_fields_collection[0].get("Value").lower() == "auth":
             provider = "visa-auth"

@@ -7,6 +7,7 @@ import settings
 from app.errors import CustomException
 from app.amex import AmexAuthView, AmexView
 from app.mastercard import MasterCardView
+from app.prometheus import start_pushgateway_thread
 from app.views import HealthCheck, LivezCheck, ReadyzCheck
 from app.visa import VisaView
 
@@ -26,6 +27,8 @@ def handle_custom_exception(error: CustomException, req: falcon.Request, resp: f
 
 def create_app() -> falcon.API:
     app = falcon.API()
+
+    start_pushgateway_thread(settings.PROMETHEUS_PUSH_GATEWAY, settings.PROMETHEUS_JOB)
 
     if settings.SENTRY_DSN:
         sentry_sdk.init(dsn=settings.SENTRY_DSN, environment=settings.SENTRY_ENV, integrations=[FalconIntegration()])
@@ -47,6 +50,5 @@ def create_app() -> falcon.API:
     app.add_route("/readyz", ReadyzCheck())
     app.add_route("/auth_transactions/authorize", AmexAuthView)
     app.add_route("/auth_transactions/amex", AmexView)
-    app.add_route("/auth_transactions/mastercard", MasterCardView)
 
     return app

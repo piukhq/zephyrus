@@ -22,6 +22,7 @@ sentry-sdk = {extras = ["falcon"],version = "*"}
 kombu = "*"
 hvac = "*"
 shared-config-storage = {index = "bypi", version = "*"}
+prometheus-client = "*"
 
 [dev-packages]
 pytest = "*"
