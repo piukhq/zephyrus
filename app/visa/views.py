@@ -1,15 +1,16 @@
 import falcon
 from app import queue
-from app.prometheus import counters
+from app.prometheus import counter
 
 
 class VisaView:
     def on_post(self, req: falcon.Request, resp: falcon.Response):
-        counters["visa"].inc()
+        provider = "visa"
         user_fields_collection = req.media.get("UserDefinedFieldsCollection")
         if user_fields_collection and user_fields_collection[0].get("Value").lower() == "auth":
-            provider = "visa-auth"
+            tx_type = "auth"
         else:
-            provider = "visa-settlement"
-        queue.add(req.media, provider="visa", queue_name=provider)
+            tx_type = "settlement"
+        counter.labels(payment_card=provider, type=tx_type).inc()
+        queue.add(req.media, provider=provider, queue_name=f"{provider}-{tx_type}")
         resp.media = {"error_msg": "", "status_code": "0"}

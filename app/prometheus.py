@@ -6,7 +6,7 @@ import urllib.error
 
 from prometheus_client import CollectorRegistry, push_to_gateway, Counter
 
-counters = {k: Counter(k, f"Total requests received from {k}") for k in ("amex", "mastercard", "visa")}
+counter = Counter("payment_card_total", "Total requests", ["payment_card", "type"])
 
 
 def start_pushgateway_thread(push_gateway: str, prometheus_job: str):
@@ -32,7 +32,6 @@ class PrometheusPushThread(threading.Thread):
     def run(self):
         time.sleep(10)
         while True:
-            now = time.time()
             try:
                 push_to_gateway(
                     gateway=self.prometheus_push_gateway,
@@ -46,6 +45,5 @@ class PrometheusPushThread(threading.Thread):
                 logging.warning("Failed to push metrics, connection refused")
             except Exception as err:
                 logging.exception("Caught exception whilst posting metrics", exc_info=err)
-            remaining = self.SLEEP_INTERVAL - (time.time() - now)
-            if remaining > 0:
-                time.sleep(remaining)
+
+            time.sleep(self.SLEEP_INTERVAL)

@@ -2,7 +2,7 @@ import falcon
 
 from app import queue
 from app.amex import jwt_auth
-from app.prometheus import counters
+from app.prometheus import counter
 from app.security import generate_jwt
 
 
@@ -20,6 +20,6 @@ class AmexAuthView:
 class AmexView:
     @jwt_auth
     def on_post(self, req: falcon.Request, resp: falcon.Response):
-        counters["amex"].inc()
+        counter.labels(payment_card="amex", type="auth").inc()
         queue.add(req.media, provider="amex", queue_name="amex-auth")
         resp.media = {"success": True}
