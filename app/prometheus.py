@@ -4,7 +4,7 @@ import threading
 import time
 import urllib.error
 
-from prometheus_client import CollectorRegistry, push_to_gateway, Counter
+from prometheus_client import REGISTRY, push_to_gateway, Counter
 
 counter = Counter("payment_card_total", "Total requests", ["payment_card", "type"])
 
@@ -36,7 +36,7 @@ class PrometheusPushThread(threading.Thread):
                 push_to_gateway(
                     gateway=self.prometheus_push_gateway,
                     job=self.prometheus_job,
-                    registry=CollectorRegistry(),
+                    registry=REGISTRY,
                     grouping_key=self.grouping_key,
                     timeout=self.PUSH_TIMEOUT,
                 )
