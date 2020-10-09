@@ -40,7 +40,7 @@ class PrometheusPushThread(threading.Thread):
                     grouping_key=self.grouping_key,
                     timeout=self.PUSH_TIMEOUT,
                 )
-                logging.info("Pushed metrics to gateway")
+                logging.debug("Pushed metrics to gateway")
             except (ConnectionRefusedError, urllib.error.URLError):
                 logging.warning("Failed to push metrics, connection refused")
             except Exception as err:

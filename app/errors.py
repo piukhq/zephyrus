@@ -71,8 +71,7 @@ errors = {
 
 
 class CustomException(Exception):
-    """Exception raised for errors in the input.
-    """
+    "Exception raised for errors in the input."
 
     def __init__(self, name, *format_args, message=None, payload=None):
         self.name = errors[name]["name"]
