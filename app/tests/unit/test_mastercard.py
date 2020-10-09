@@ -155,7 +155,7 @@ class MasterCardAuthTestCases(TestCase):
         self.assertEqual(mc_data, {})
 
     def test_get_valid_signed_data_elements(self, _):
-        """ Tests a certificate can be produced, a transaction signed and verified by signXML
+        """Tests a certificate can be produced, a transaction signed and verified by signXML
         This tests the get_valid_signed_data function in process_xml_request will
         get all the required data
         """
