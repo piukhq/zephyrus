@@ -32,6 +32,9 @@ style:
 
 type-check:
   stage: tests
+  image: binkhq/python:3.8
+  before_script:
+    - pip install mypy
   script:
     - mypy --ignore-missing-imports app
 
