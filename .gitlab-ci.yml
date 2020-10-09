@@ -9,6 +9,8 @@ tests:
   stage: tests
   image: binkhq/python:3.8
   before_script:
+    - apt-get update
+    - apt-get -y install gcc
     - pip install pipenv
     - pipenv install --dev --system --deploy --ignore-pipfile
   script:
