@@ -1,3 +1,3 @@
 from .api import create_app  # noqa
 
-__version__ = "1.2"
+__version__ = "1.3"
