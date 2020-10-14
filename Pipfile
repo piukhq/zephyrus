@@ -22,6 +22,7 @@ sentry-sdk = {extras = ["falcon"],version = "*"}
 kombu = "*"
 hvac = "*"
 shared-config-storage = {index = "bypi", version = "*"}
+prometheus-client = "*"
 
 [dev-packages]
 pytest = "*"
@@ -29,5 +30,5 @@ pytest-cov = "*"
 werkzeug = "*"
 mypy = "*"
 freezegun = "*"
-black = "==19.10b0"
+black = "==20.8b1"
 flake8 = "*"
