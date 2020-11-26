@@ -6,8 +6,6 @@ from cryptography.x509.oid import NameOID
 from cryptography.hazmat.primitives import hashes
 from signxml import XMLVerifier, XMLSigner, methods as sign_methods
 import lxml.etree as etree
-from azure.storage.blob import BlobServiceClient
-import settings
 import hashlib
 import base64
 import datetime
@@ -328,12 +326,3 @@ def valid_transaction_xml(xml):
         except etree.ParseError:
             pass
     return ret
-
-
-def azure_write(file, text):
-    blob_service = BlobServiceClient(account_name=settings.AZURE_ACCOUNT_NAME, account_key=settings.AZURE_ACCOUNT_KEY)
-    blob_client = blob_service.get_blob_client(
-        settings.AZURE_CONTAINER,
-        f"{settings.AZURE_CERTIFICATE_FOLDER.strip('/')}/{settings.MASTERCARD_CERTIFICATE_BLOB_NAME.strip('/')}",
-    )
-    blob_client.upload_blob(text, blob_type="BlockBlob")
