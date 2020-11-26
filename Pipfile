@@ -15,11 +15,9 @@ signxml = "*"
 voluptuous = "*"
 python-jose-cryptodome = "*"
 arrow = "*"
-azure-storage-blob = "*"
-redis = "*"
 falcon = "*"
-sentry-sdk = {extras = ["falcon"],version = "*"}
-kombu = "*"
+sentry-sdk = {extras = ["falcon"], version = "*"}
+kombu = {extras = ["redis", "azure-servicebus"], version = "*"}
 hvac = "*"
 shared-config-storage = {index = "bypi", version = "*"}
 prometheus-client = "*"

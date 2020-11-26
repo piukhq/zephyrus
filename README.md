@@ -59,23 +59,6 @@ Iaw=
   
 #### Environment Variables
 
-- `SERVICE_API_KEY`
-  - String Value, Auth API Key for communication between services.
-- `HERMES_URL`
-  - String Value, URL for Hermes
-- `CLIENT_INFO_STORAGE_TIMEOUT`
-  - Integer Value, Minimum number of minutes before redis cache should be updated by hermes
-- `AZURE_ACCOUNT_NAME`
-  - Azure Account Name defaults to "bink"
-- `AZURE_ACCOUNT_KEY` 
-  - Azure account key must be set in environment
-- `AZURE_CONTAINER`
-  - The container name defaults to "dev-media"
-- `AZURE_CERTIFICATE_FOLDER`  
-  - The path to certificates defaults to "zephyrus/certificates/"
-  - This is the first part of the Azure path which when combined with the MASTERCARD_CERTIFICATE_BLOB_NAME provides the full path to the location the certificate must be uploaded.
-- `MASTERCARD_CERTIFICATE_BLOB_NAME`
-  - The file name or end part of path specific to Mastercard defaults to "mc_perm_cert"
 - `VAULT_URL`
   - String value, URL to Hashicorp Vault
 - `VAULT_TOKEN`
