@@ -27,6 +27,7 @@ def is_available() -> Tuple[bool, str]:
 
     try:
         with Connection(settings.AMQP_DSN, connect_timeout=3) as conn:
+            conn.connect()
             assert conn.connected
     except Exception as err:
         status = False
