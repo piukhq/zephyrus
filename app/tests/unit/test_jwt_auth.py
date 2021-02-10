@@ -96,7 +96,7 @@ class TestJwtAuth(TestCase):
     def test_load_secrets(self, mock_secret_client, _):
         settings.KEYVAULT_URI = "https://bink-test-com.vault.azure.net/"
         mock_kvclient = mock_secret_client.return_value
-        mock_kvclient.get_secret.return_value = {"amex": {"client_id": "testid", "secret": "testsecret"}}
+        mock_kvclient.get_secret.return_value.value = '{"amex": {"client_id": "testid", "secret": "testsecret"}}'
         secret = load_secrets("data-auth-transactions")
         self.assertTrue(mock_secret_client.called)
         self.assertEqual(secret["amex"]["client_id"], "testid")
