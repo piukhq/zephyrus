@@ -1,10 +1,9 @@
 import jose.jwt
-import requests  # noqa
 
+import settings
 from unittest import mock
 from falcon.testing import TestCase
 from freezegun import freeze_time
-from shared_config_storage.vault.secrets import VaultError  # noqa
 from app import create_app
 from app.security import generate_jwt, load_secrets, validate_credentials
 
@@ -37,7 +36,7 @@ class TestJwtAuth(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(
             resp.json["api_key"],
-            "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1ODIyNDM1MDAsIm5iZiI6MTU4MjI0MzIwMCwiaXNzIjoiYmluayIsImF1ZCI6Imh0dHBzOi8vYXBpLmJpbmsuY29tIiwiaWF0IjoxNTgyMjQzMjAwLCJzdWIiOiJ0ZXN0aWQifQ.irf-CKuXMCs071vfTZPfjTXIafLytQzts9DXHTJWzUs",  # noqa
+            "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1ODIyNDM1MDAsIm5iZiI6MTU4MjI0MzIwMCwiaXNzIjoiYmluayIsImF1ZCI6Imh0dHBzOi8vYXBpLmdiLmJpbmsuY29tIiwiaWF0IjoxNTgyMjQzMjAwLCJzdWIiOiJ0ZXN0aWQifQ.aV7FzQsUR4jLIE7ok59y7hDOpV-ENHPkjwrBDeC_iso",  # noqa
         )
 
     @mock.patch("app.security.load_secrets")
@@ -81,7 +80,7 @@ class TestJwtAuth(TestCase):
         mock_load_secrets.return_value = {"amex": {"client_id": "testid", "secret": "testsecret"}}
         token = generate_jwt("amex", self.payload)
 
-        jwt = jose.jwt.decode(token, "testsecret", audience="https://api.bink.com", issuer="bink")
+        jwt = jose.jwt.decode(token, "testsecret", audience="https://api.gb.bink.com", issuer="bink")
 
         self.assertEqual(jwt["sub"], "testid")
 
@@ -93,18 +92,14 @@ class TestJwtAuth(TestCase):
 
         self.assertEqual(token, None)
 
-    @mock.patch("app.security.read_vault", autospec=True)
-    def test_load_secrets(self, mock_read_vault, _):
-        mock_read_vault.return_value = {"amex": {"client_id": "testid", "secret": "testsecret"}}
-        secret = load_secrets("/data/auth_transactions")
-        self.assertTrue(mock_read_vault.called)
+    @mock.patch("app.security.SecretClient", autospec=True)
+    def test_load_secrets(self, mock_secret_client, _):
+        settings.KEYVAULT_URI = "https://bink-test-com.vault.azure.net/"
+        mock_kvclient = mock_secret_client.return_value
+        mock_kvclient.get_secret.return_value = {"amex": {"client_id": "testid", "secret": "testsecret"}}
+        secret = load_secrets("data-auth-transactions")
+        self.assertTrue(mock_secret_client.called)
         self.assertEqual(secret["amex"]["client_id"], "testid")
-
-    # @mock.patch("app.security.read_vault", autospec=True)
-    # def test_load_secrets_exception(self, mock_read_vault):
-    #     mock_read_vault.side_effect = requests.exceptions.RequestException
-    #     with self.assertRaises(VaultError) as cm:
-    #         resp = load_secrets()
 
     @mock.patch("app.amex.authentication.load_secrets")
     @mock.patch("app.amex.authentication.jose.jwt.decode", autospec=True)

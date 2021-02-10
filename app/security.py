@@ -1,26 +1,31 @@
 import arrow
-import logging
 import jose
-import requests
+import json
 
+from azure.identity import DefaultAzureCredential
+from azure.keyvault.secrets import SecretClient
+from azure.core.exceptions import HttpResponseError
 from functools import lru_cache
 
-from shared_config_storage.vault.secrets import VaultError, read_vault
-from settings import VAULT_TOKEN, VAULT_URL
+import settings
 
 
 @lru_cache(16)
-def load_secrets(vault_path: str):
+def load_secrets(secret_name: str):
+    if settings.KEYVAULT_URI is None:
+        raise Exception("Vault Error: settings.KEYVAULT_URI not set")
+
+    kv_credential = DefaultAzureCredential()
+    kv_client = SecretClient(vault_url=settings.KEYVAULT_URI, credential=kv_credential)
 
     try:
-        return read_vault(vault_path, VAULT_URL, VAULT_TOKEN)
-    except requests.RequestException as e:
-        logging.exception(f"Unable to request the secrets from the Vault. {e}")
-        raise VaultError(f"Unable to request the secrets from the Vault {e}") from e
+        return json.loads(kv_client.get_secret(secret_name).value)
+    except HttpResponseError as e:
+        raise Exception(f"Vault Error: {e}") from e
 
 
 def generate_jwt(slug, credentials):
-    client_secrets = load_secrets("/data/auth_transactions")
+    client_secrets = load_secrets("data-auth-transactions")
     client_id = client_secrets[slug].get("client_id", "").strip()
     secret = client_secrets[slug].get("secret", "").strip()
 
@@ -32,7 +37,7 @@ def generate_jwt(slug, credentials):
         "exp": time_now.shift(minutes=+5).timestamp,
         "nbf": time_now.timestamp,
         "iss": "bink",
-        "aud": "https://api.bink.com",
+        "aud": "https://api.gb.bink.com",
         "iat": time_now.timestamp,
         "sub": client_id,
     }
