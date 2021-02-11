@@ -19,8 +19,9 @@ falcon = "*"
 sentry-sdk = {extras = ["falcon"], version = "*"}
 kombu = {extras = ["redis", "azure-servicebus"], version = "*"}
 hvac = "*"
-shared-config-storage = {index = "bypi", version = "*"}
 prometheus-client = "*"
+azure-keyvault-secrets = "*"
+azure-identity = "*"
 
 [dev-packages]
 pytest = "*"
