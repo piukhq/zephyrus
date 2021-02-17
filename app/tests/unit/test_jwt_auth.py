@@ -3,9 +3,12 @@ import jose.jwt
 import settings
 from unittest import mock
 from falcon.testing import TestCase
-from freezegun import freeze_time
+from freezegun import freeze_time, configure
 from app import create_app
 from app.security import generate_jwt, load_secrets, validate_credentials
+
+# Freezegun ignore modules.
+configure(extend_ignore_list=["eight"])
 
 
 @mock.patch("app.queue.add")
