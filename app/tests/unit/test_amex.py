@@ -10,7 +10,6 @@ from app import create_app
 class TestAmex(TestCase):
     TESTING = True
     headers = {"Authorization": "token wwed"}
-    amex_endpoint = "/auth_transactions/amex"
 
     payload = {
         "transaction_time": "2013-05-23 20:30:15",
@@ -27,8 +26,9 @@ class TestAmex(TestCase):
 
     @mock.patch("app.amex.authentication.load_secrets")
     def test_process_auth_transaction_success(self, _, mock_decode, mock_load_secrets):
+        amex_endpoint = "/auth_transactions/amex"
         mock_load_secrets.return_value = {"amex": {"client_id": "test123456789", "secret": "testsecret987654321"}}
-        resp = self.simulate_post(self.amex_endpoint, json=self.payload, headers=self.headers)
+        resp = self.simulate_post(amex_endpoint, json=self.payload, headers=self.headers)
 
         self.assertTrue(mock_decode.called)
         self.assertEqual(resp.status_code, 200)

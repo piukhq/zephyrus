@@ -7,7 +7,7 @@ stages:
 
 tests:
   stage: tests
-  image: binkhq/python:3.8
+  image: binkhq/python:3.9
   before_script:
     - apt-get update
     - apt-get -y install gcc
@@ -18,7 +18,7 @@ tests:
 
 complexity:
   stage: tests
-  image: binkhq/python:3.8
+  image: binkhq/python:3.9
   before_script:
     - pip install xenon
   script:
@@ -26,7 +26,7 @@ complexity:
 
 style:
   stage: tests
-  image: binkhq/python:3.8
+  image: binkhq/python:3.9
   before_script:
     - pip install flake8 black
   script:
@@ -34,7 +34,7 @@ style:
 
 type-check:
   stage: tests
-  image: binkhq/python:3.8
+  image: binkhq/python:3.9
   before_script:
     - pip install mypy
   script:
