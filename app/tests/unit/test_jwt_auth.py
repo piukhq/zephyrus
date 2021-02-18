@@ -3,9 +3,13 @@ import jose.jwt
 import settings
 from unittest import mock
 from falcon.testing import TestCase
+import freezegun
 from freezegun import freeze_time
 from app import create_app
 from app.security import generate_jwt, load_secrets, validate_credentials
+
+# Freezegun ignore modules.
+freezegun.configure(extend_ignore_list=["eight"])  # type: ignore
 
 
 @mock.patch("app.queue.add")
@@ -36,7 +40,7 @@ class TestJwtAuth(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(
             resp.json["api_key"],
-            "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1ODIyNDM1MDAsIm5iZiI6MTU4MjI0MzIwMCwiaXNzIjoiYmluayIsImF1ZCI6Imh0dHBzOi8vYXBpLmdiLmJpbmsuY29tIiwiaWF0IjoxNTgyMjQzMjAwLCJzdWIiOiJ0ZXN0aWQifQ.aV7FzQsUR4jLIE7ok59y7hDOpV-ENHPkjwrBDeC_iso",  # noqa
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE1ODIyNDM1MDAsIm5iZiI6MTU4MjI0MzIwMCwiaXNzIjoiYmluayIsImF1ZCI6Imh0dHBzOi8vYXBpLmdiLmJpbmsuY29tIiwiaWF0IjoxNTgyMjQzMjAwLCJzdWIiOiJ0ZXN0aWQifQ.QF0qLgNUn1cWqInGQClKnbnE90V3B1-y7w-EbkhDrN4",  # noqa
         )
 
     @mock.patch("app.security.load_secrets")
