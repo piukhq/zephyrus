@@ -13,7 +13,6 @@ requests = "*"
 lxml = "*"
 signxml = "*"
 voluptuous = "*"
-python-jose-cryptodome = "*"
 arrow = "*"
 falcon = "*"
 sentry-sdk = {extras = ["falcon"], version = "*"}
@@ -22,6 +21,7 @@ hvac = "*"
 prometheus-client = "*"
 azure-keyvault-secrets = "*"
 azure-identity = "*"
+python-jose = "*"
 
 [dev-packages]
 pytest = "*"
