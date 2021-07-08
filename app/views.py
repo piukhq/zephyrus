@@ -11,13 +11,11 @@ class HealthCheck:
 
 class LivezCheck:
     def on_get(self, req: falcon.Request, resp: falcon.Response):
-        resp.media = ""
         resp.status = falcon.HTTP_204
 
 
 class ReadyzCheck:
     def on_get(self, req: falcon.Request, resp: falcon.Response):
-        resp.media = ""
         resp.status = falcon.HTTP_204
 
         ok, err = queue.is_available()

@@ -34,11 +34,11 @@ def generate_jwt(slug, credentials):
 
     time_now = arrow.now()
     claims = {
-        "exp": time_now.shift(minutes=+5).timestamp,
-        "nbf": time_now.timestamp,
+        "exp": time_now.shift(minutes=+5).int_timestamp,
+        "nbf": time_now.int_timestamp,
         "iss": "bink",
         "aud": "https://api.gb.bink.com",
-        "iat": time_now.timestamp,
+        "iat": time_now.int_timestamp,
         "sub": client_id,
     }
     return jose.jwt.encode(claims, key=secret)
