@@ -6,10 +6,20 @@ from azure.identity import DefaultAzureCredential
 from azure.keyvault.secrets import SecretClient
 from azure.core.exceptions import HttpResponseError
 from functools import lru_cache
+from tenacity import (
+    retry,
+    stop_after_attempt,
+    wait_exponential,
+)
 
 import settings
 
 
+@retry(
+    stop=stop_after_attempt(3),
+    wait=wait_exponential(multiplier=1, min=3, max=12),
+    reraise=True,
+)
 @lru_cache(16)
 def load_secrets(secret_name: str):
     if settings.KEYVAULT_URI is None:
