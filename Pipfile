@@ -17,6 +17,7 @@ azure-identity = "*"
 python-jose = "*"
 gunicorn = "*"
 kombu = "*"
+tenacity = "*"
 
 [dev-packages]
 pytest = "*"
