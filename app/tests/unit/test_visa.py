@@ -1,5 +1,7 @@
 from unittest import mock
+
 from falcon.testing import TestCase
+
 from app import create_app
 
 

@@ -5,13 +5,13 @@ import lxml.etree as etree
 from falcon.testing import TestCase
 
 from app import create_app
-from app.mastercard.process_xml_request import mastercard_request, get_valid_signed_data_elements
+from app.mastercard.process_xml_request import get_valid_signed_data_elements, mastercard_request
 from app.tests.test_helpers.signed_xml import (
     Certificate,
-    SignedXML,
     MockMastercardAuthTransaction,
-    valid_transaction_xml,
+    SignedXML,
     UnsignedXML,
+    valid_transaction_xml,
 )
 
 

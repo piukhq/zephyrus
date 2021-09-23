@@ -11,9 +11,6 @@ logging.basicConfig(format="%(asctime)s | %(name)24s | %(levelname)8s | %(messag
 DEV_HOST = env_var("DEV_HOST", "0.0.0.0")
 DEV_PORT = int(env_var("DEV_PORT", "5000"))
 
-SENTRY_DSN = env_var("SENTRY_DSN")
-SENTRY_ENV = env_var("SENTRY_ENV")
-
 AMQP_USER = env_var("AMQP_USER", "guest")
 AMQP_PASSWORD = env_var("AMQP_PASSWORD", "guest")
 AMQP_HOST = env_var("AMQP_HOST", "localhost")
