@@ -1,7 +1,7 @@
 import falcon
 
-from app.mastercard import mastercard_signed_xml_response
 from app import queue
+from app.mastercard import mastercard_signed_xml_response
 from app.prometheus import counter
 
 

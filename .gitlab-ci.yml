@@ -21,6 +21,7 @@ test:style:
   script:
     - flake8
     - black --line-length 120 --check .
+    - isort --line-length 120 --profile black --check .
 
 test:type-check:
   <<: *test

@@ -1,16 +1,12 @@
+import json
+from functools import lru_cache
+
 import arrow
 import jose
-import json
-
+from azure.core.exceptions import HttpResponseError
 from azure.identity import DefaultAzureCredential
 from azure.keyvault.secrets import SecretClient
-from azure.core.exceptions import HttpResponseError
-from functools import lru_cache
-from tenacity import (
-    retry,
-    stop_after_attempt,
-    wait_exponential,
-)
+from tenacity import retry, stop_after_attempt, wait_exponential
 
 import settings
 

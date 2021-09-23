@@ -1,15 +1,16 @@
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric import rsa
-from cryptography import x509
-from cryptography.x509.oid import NameOID
-from cryptography.hazmat.primitives import hashes
-from signxml import XMLVerifier, XMLSigner, methods as sign_methods
-import lxml.etree as etree
-import hashlib
 import base64
 import datetime
+import hashlib
 import io
+
+import lxml.etree as etree
+from cryptography import x509
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.x509.oid import NameOID
+from signxml import XMLSigner, XMLVerifier
+from signxml import methods as sign_methods
 
 
 class BasicXML:

@@ -1,13 +1,12 @@
 import falcon
 import sentry_sdk
-from falcon.media import JSONHandler, Handlers
+from falcon.media import Handlers, JSONHandler
 from sentry_sdk.integrations.falcon import FalconIntegration
 
-import settings
+from app.amex import AmexAuthView, AmexSettlementView, AmexView
 from app.errors import CustomException
-from app.amex import AmexAuthView, AmexView, AmexSettlementView
 from app.mastercard import MasterCardView
-from app.prometheus import start_pushgateway_thread
+from app.prometheus import PrometheusHandler
 from app.views import HealthCheck, LivezCheck, ReadyzCheck
 from app.visa import VisaView
 
@@ -25,13 +24,10 @@ def handle_custom_exception(error: CustomException, req: falcon.Request, resp: f
     resp.status = error.code
 
 
-def create_app() -> falcon.API:
-    app = falcon.API()
+def create_app() -> falcon.App:
+    app = falcon.App()
 
-    start_pushgateway_thread(settings.PROMETHEUS_PUSH_GATEWAY, settings.PROMETHEUS_JOB)
-
-    if settings.SENTRY_DSN:
-        sentry_sdk.init(dsn=settings.SENTRY_DSN, environment=settings.SENTRY_ENV, integrations=[FalconIntegration()])
+    sentry_sdk.init(integrations=[FalconIntegration()])
 
     app.add_error_handler(CustomException, handle_custom_exception)
     app.req_options.media_handlers = Handlers(
@@ -51,4 +47,5 @@ def create_app() -> falcon.API:
     app.add_route("/auth_transactions/authorize", AmexAuthView)
     app.add_route("/auth_transactions/amex", AmexView)
     app.add_route("/auth_transactions/amex/settlement", AmexSettlementView)
+    app.add_route("/metrics", PrometheusHandler())
     return app
