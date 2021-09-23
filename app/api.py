@@ -24,8 +24,8 @@ def handle_custom_exception(error: CustomException, req: falcon.Request, resp: f
     resp.status = error.code
 
 
-def create_app() -> falcon.API:
-    app = falcon.API()
+def create_app() -> falcon.App:
+    app = falcon.App()
 
     sentry_sdk.init(integrations=[FalconIntegration()])
 
@@ -47,5 +47,5 @@ def create_app() -> falcon.API:
     app.add_route("/auth_transactions/authorize", AmexAuthView)
     app.add_route("/auth_transactions/amex", AmexView)
     app.add_route("/auth_transactions/amex/settlement", AmexSettlementView)
-    app.add_route("/metrics", PrometheusHandler)
+    app.add_route("/metrics", PrometheusHandler())
     return app
