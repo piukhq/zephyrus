@@ -1,7 +1,8 @@
 import json
-from app import queue
 
 import falcon
+
+from app import queue
 
 
 class HealthCheck:

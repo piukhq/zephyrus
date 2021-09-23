@@ -1,14 +1,14 @@
 import datetime
 
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives import hashes
-from cryptography import x509
-from cryptography.x509.oid import NameOID
-from signxml import XMLSigner, methods as sign_methods
 import requests
+from cryptography import x509
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.x509.oid import NameOID
+from signxml import XMLSigner
+from signxml import methods as sign_methods
 
-from app.tests.test_helpers.signed_xml import SignedXML, MockMastercardAuthTransaction
+from app.tests.test_helpers.signed_xml import MockMastercardAuthTransaction, SignedXML
 
 
 class Certificate:

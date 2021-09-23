@@ -2,10 +2,10 @@ import arrow
 import falcon
 import lxml.etree as etree
 import sentry_sdk
-
-from OpenSSL.crypto import load_certificate, FILETYPE_PEM
-from signxml import XMLVerifier, InvalidCertificate, InvalidSignature, InvalidDigest, InvalidInput
+from OpenSSL.crypto import FILETYPE_PEM, load_certificate
+from signxml import InvalidCertificate, InvalidDigest, InvalidInput, InvalidSignature, XMLVerifier
 from signxml.util import add_pem_header
+
 from app.errors import CustomException
 
 

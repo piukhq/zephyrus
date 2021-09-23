@@ -1,4 +1,4 @@
-from voluptuous import Schema, Required, Optional
+from voluptuous import Optional, Required, Schema
 
 client_info = Schema({Required("organisation"): str, Required("client_id"): str, Required("secret"): str})
 

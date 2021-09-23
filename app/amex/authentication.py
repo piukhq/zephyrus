@@ -2,15 +2,16 @@ from typing import TYPE_CHECKING
 
 import jose.exceptions
 import jose.jwt
-from app.security import load_secrets
+
 from app.errors import (
-    AuthException,
-    MISSING_AUTH,
-    INVALID_AUTH_FORMAT,
-    INVALID_AUTH_TYPE,
     AUTH_EXPIRED,
+    INVALID_AUTH_FORMAT,
     INVALID_AUTH_TOKEN,
+    INVALID_AUTH_TYPE,
+    MISSING_AUTH,
+    AuthException,
 )
+from app.security import load_secrets
 
 if TYPE_CHECKING:
     import falcon
