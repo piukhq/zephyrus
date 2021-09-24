@@ -30,4 +30,4 @@ class VisaView:
             return
 
         counter.labels(payment_card=provider, type=tx_type).inc()
-        queue.add(req.media, provider=provider, queue_name=f"{provider}-{tx_type}")
+        queue.add(req.media, provider=provider, queue_name=f"{provider}-{tx_type}", span=req.context.scope.span)

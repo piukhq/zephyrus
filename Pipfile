@@ -18,6 +18,8 @@ python-jose = "*"
 gunicorn = "*"
 kombu = "*"
 tenacity = "*"
+opentracing = "<3.0.0"
+jaeger-client = "*"
 
 [dev-packages]
 pytest = "*"
