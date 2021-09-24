@@ -7,8 +7,10 @@ from app.amex import AmexAuthView, AmexSettlementView, AmexView
 from app.errors import CustomException
 from app.mastercard import MasterCardView
 from app.prometheus import PrometheusHandler
+from app.tracing import AzureTracing
 from app.views import HealthCheck, LivezCheck, ReadyzCheck
 from app.visa import VisaView
+from settings import tracer
 
 
 class RawXMLHandler(JSONHandler):
@@ -25,9 +27,12 @@ def handle_custom_exception(error: CustomException, req: falcon.Request, resp: f
 
 
 def create_app() -> falcon.App:
-    app = falcon.App()
-
     sentry_sdk.init(integrations=[FalconIntegration()])
+
+    opentracing_middleware = AzureTracing(tracer)
+
+    app = falcon.App()
+    app.add_middleware(opentracing_middleware)
 
     app.add_error_handler(CustomException, handle_custom_exception)
     app.req_options.media_handlers = Handlers(

@@ -1,4 +1,8 @@
 import logging
+from typing import cast
+
+import opentracing
+from jaeger_client import Config
 
 from environment import env_var, read_env
 
@@ -21,3 +25,23 @@ KEYVAULT_URI = env_var("KEYVAULT_URI", None)
 
 PROMETHEUS_PUSH_GATEWAY = env_var("PROMETHEUS_PUSH_GATEWAY", "http://localhost:9100")
 PROMETHEUS_JOB = env_var("PROMETHEUS_JOB", "zephyrus")
+
+_tracing_config = Config(
+    config={
+        "sampler": {
+            "type": "probabilistic",
+            "param": float(env_var("TRACING_SAMPLE_RATE", "0")),
+        },
+        "local_agent": {
+            "reporting_host": env_var("TRACING_AGENT_HOST", "localhost"),
+            "reporting_port": env_var("TRACING_AGENT_REPORTING_PORT", "6831"),
+            "sampling_port": env_var("TRACING_AGENT_SAMPLING_PORT", "5778"),
+        },
+        "logging": True,
+    },
+    service_name="zephyrus",
+    validate=True,
+)
+
+# Casting to stop mypy complaining, it returns a tracer on first run else None
+tracer = cast(opentracing.Tracer, _tracing_config.initialize_tracer())
