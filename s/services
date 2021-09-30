@@ -1,0 +1,14 @@
+#! /bin/bash
+
+source s/_common
+
+s/rmservices
+
+p 'creating rabbitmq'
+docker run \
+	-d \
+	-p55672:5672 \
+	-p55673:15672 \
+	--name txm-rabbitmq \
+	rabbitmq:3-management
+

@@ -28,13 +28,15 @@ PROMETHEUS_JOB = env_var("PROMETHEUS_JOB", "zephyrus")
 
 _tracing_config = Config(
     config={
+        "propagation": "b3",
         "sampler": {
             "type": "probabilistic",
             "param": float(env_var("TRACING_SAMPLE_RATE", "0")),
         },
         "local_agent": {
             "reporting_host": env_var("TRACING_AGENT_HOST", "localhost"),
-            "reporting_port": env_var("TRACING_AGENT_REPORTING_PORT", "6831"),
+            # 6831 for jaeger traces, 5775 for b3
+            "reporting_port": env_var("TRACING_AGENT_REPORTING_PORT", "5775"),
             "sampling_port": env_var("TRACING_AGENT_SAMPLING_PORT", "5778"),
         },
         "logging": True,

@@ -1,25 +1,101 @@
-### Zephyrus
+# Zephyrus
+
+TODO all the badges
+
 Microservice to process auth transactions.
 
-
-#### Local Setup
-
-- Clone the project and run:
-
-  `pipenv install`
-
-- Create a .env file for local development with the following:
-
-  FLASK_APP=zephyrus
-
-  FLASK_ENV=development
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
 
 
-- To run the server:
-`flask run` or
-`python manage.py runserver`
+## Prerequisites
 
-  This should run the server in development mode with Debug set to True.
+- [pipenv](https://docs.pipenv.org)
+
+## Dependencies
+
+The following is a list of the important dependencies used in the project. You do not need to install these manually. 
+See [project setup](#project-setup) for installation instructions.
+
+- [Falcon](https://falcon.readthedocs.io/en/stable/) - Falcon Python web framework.
+- [Sentry SDK](https://docs.sentry.io/quickstart?platform=python) - Client for the Sentry error reporting platform. Includes Flask integration.
+- [RabbitMQ](https://www.rabbitmq.com/) - AMQP Message broker.
+
+## Project Setup
+
+Pipenv is used for managing project dependencies and execution.
+
+### Virtual Environment
+
+To create a virtualenv and install required software packages:
+
+```bash
+pipenv install --dev
+```
+
+Project configuration is done through environment variables. A convenient way to set these is in a `.env` file in the project root. 
+This file will be sourced by Pipenv when `pipenv run` and `pipenv shell` are used. 
+See `settings.py` for configuration options that can be set in this file.
+
+To make a `.env` file from the provided example:
+
+```bash
+cp .env.example .env
+```
+
+The provided example is sufficient as a basic configuration, but modification may be required for specific use-cases.
+
+The `.env` file contains connection parameters for the two major services used in the project; PostgreSQL and Redis. The default connection parameters assume a local instance of these services listening on ports 51234 (PostgreSQL) and 61234 (Redis.)
+
+To quickly create docker containers for the required services:
+
+```bash
+s/services
+```
+
+### Development API Server
+
+The flask development server is used for running the project locally. This should be replaced with a WSGI-compatible server for deployment to a live environment.
+
+To run the flask development server:
+
+```bash
+s/api
+```
+
+
+### Unit Tests
+
+Testing is done with `pytest`.
+
+To execute a full test run:
+
+```bash
+s/test
+```
+
+### Inspecting RabbitMQ
+
+```
+http://localhost:55673/
+User: guest
+Password: guest
+```
+
+This will bring up the RabbitMQ management interface which you can see queued transactions in.
+
+## Deployment
+
+There is a Dockerfile provided in the project root. Build an image from this to get a deployment-ready version of the project.
+
+
+
+
+
+
+
+
+
+
   
 - Install on azure the Mastercard Signing certificate (required to use auth transaction messages from mastercard)
   - A signing certificate in pem format should be uploaded to the defined location 

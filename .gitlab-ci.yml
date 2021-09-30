@@ -9,7 +9,13 @@ test:pytest: &test
   before_script:
     - pipenv install --dev --system --deploy --ignore-pipfile
   script:
-    - pytest --verbose --cov app --cov-report term-missing app/tests/unit
+    - pytest --verbose --cov app --cov-report=xml --junitxml=report.xml app/tests/unit
+  artifacts:
+    when: always
+    reports:
+      junit: report.xml
+      cobertura: coverage.xml
+
 
 test:complexity:
   <<: *test
