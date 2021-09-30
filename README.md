@@ -5,7 +5,19 @@ TODO all the badges
 Microservice to process auth transactions.
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
+- [Prerequisites](#prerequisites)
+- [Dependencies](#dependencies)
+- [Project Setup](#project-setup)
+  - [Virtual Environment](#virtual-environment)
+  - [Development API Server](#development-api-server)
+  - [Unit Tests](#unit-tests)
+  - [Inspecting RabbitMQ](#inspecting-rabbitmq)
+- [Deployment](#deployment)
+    - [Environment Variables](#environment-variables)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 ## Prerequisites
 
@@ -19,6 +31,8 @@ See [project setup](#project-setup) for installation instructions.
 - [Falcon](https://falcon.readthedocs.io/en/stable/) - Falcon Python web framework.
 - [Sentry SDK](https://docs.sentry.io/quickstart?platform=python) - Client for the Sentry error reporting platform. Includes Flask integration.
 - [RabbitMQ](https://www.rabbitmq.com/) - AMQP Message broker.
+- [Azure KeyVault Secrets](https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/keyvault/azure-keyvault-secrets) - Azure KeyVault secrets library.
+- [AzureCLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli) - Used to magically have credentials to the Dev Azure KeyVault.
 
 ## Project Setup
 
@@ -44,7 +58,8 @@ cp .env.example .env
 
 The provided example is sufficient as a basic configuration, but modification may be required for specific use-cases.
 
-The `.env` file contains connection parameters for the two major services used in the project; PostgreSQL and Redis. The default connection parameters assume a local instance of these services listening on ports 51234 (PostgreSQL) and 61234 (Redis.)
+The `.env` file contains connection parameters for RabbitMQ used in the project; 
+The default connection parameters assume a local instance of these services listening on ports 55672 (RabbitMQ)
 
 To quickly create docker containers for the required services:
 
@@ -54,14 +69,17 @@ s/services
 
 ### Development API Server
 
-The flask development server is used for running the project locally. This should be replaced with a WSGI-compatible server for deployment to a live environment.
+The falcon development server is used for running the project locally. 
+This should be replaced with a WSGI-compatible server for deployment to a live environment.
 
-To run the flask development server:
+To run the Falcon development server:
 
 ```bash
 s/api
 ```
 
+* VISA request info - [link](./VISA.md)
+* AMEX request info - [link](./AMEX.md)
 
 ### Unit Tests
 

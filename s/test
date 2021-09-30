@@ -3,4 +3,4 @@
 source s/_common
 
 p 'running tests'
-pipenv run pytest --cov app/tests/unit -v
+pipenv run pytest --cov app app/tests/unit -v
