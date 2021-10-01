@@ -2,7 +2,7 @@ import logging
 
 import pytest
 
-import gunicorn
+import gunicorn_logger
 
 
 @pytest.mark.parametrize(
@@ -14,7 +14,7 @@ import gunicorn
     ],
 )
 def test_log_filtering(logline, should_log):
-    log_filter = gunicorn.HealthcheckFilter("filter")
+    log_filter = gunicorn_logger.HealthcheckFilter("filter")
     log_record = logging.LogRecord("name", logging.INFO, "/", 1, logline, {}, None)
 
     assert log_filter.filter(log_record) is should_log
