@@ -85,7 +85,11 @@ class MasterCardAuthTestCases(TestCase):
         )
         signed_xml = SignedXML(trans, signing_cert=signing_cert)
         tampered_xml = signed_xml.xml.decode("utf8").replace("0.45", "500")
-        resp = self.simulate_post(self.mastercard_endpoint, body=tampered_xml.encode("utf8"), headers=self.headers)
+        resp = self.simulate_post(
+            self.mastercard_endpoint,
+            body=tampered_xml.encode("utf8"),
+            headers=self.headers,
+        )
         self.assertTrue(valid_transaction_xml(resp.json), "Invalid XML response")
         self.assertEqual(resp.status_code, 403)
 

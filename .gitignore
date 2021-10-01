@@ -6,3 +6,5 @@ __pycache__
 .idea
 .env
 .mypy_cache
+cert.pem
+key.pem

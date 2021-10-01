@@ -21,7 +21,10 @@ class OpentracingMiddleware:
         try:
             span_ctx = self.tracer.extract(opentracing.Format.HTTP_HEADERS, headers)
             scope = self.tracer.start_active_span(operation_name, child_of=span_ctx)
-        except (opentracing.InvalidCarrierException, opentracing.SpanContextCorruptedException):
+        except (
+            opentracing.InvalidCarrierException,
+            opentracing.SpanContextCorruptedException,
+        ):
             scope = self.tracer.start_active_span(operation_name)
 
         self._current_scopes[req] = scope
@@ -40,7 +43,13 @@ class OpentracingMiddleware:
     def before_request_span(self, span: opentracing.Span, req: falcon.Request, headers: dict[str, str]):
         pass
 
-    def process_response(self, req: falcon.Request, resp: falcon.Response, resource: object, req_succeeded: bool):
+    def process_response(
+        self,
+        req: falcon.Request,
+        resp: falcon.Response,
+        resource: object,
+        req_succeeded: bool,
+    ):
         scope = self._current_scopes.pop(req, None)
         if not scope:
             return

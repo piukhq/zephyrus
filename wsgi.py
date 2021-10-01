@@ -20,5 +20,5 @@ if __name__ == "__main__":
         port=settings.DEV_PORT,
         application=app,
         use_reloader=not in_debugger,
-        use_debugger=True,
+        use_debugger=not in_debugger,
     )

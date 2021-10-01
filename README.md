@@ -33,6 +33,7 @@ See [project setup](#project-setup) for installation instructions.
 - [RabbitMQ](https://www.rabbitmq.com/) - AMQP Message broker.
 - [Azure KeyVault Secrets](https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/keyvault/azure-keyvault-secrets) - Azure KeyVault secrets library.
 - [AzureCLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli) - Used to magically have credentials to the Dev Azure KeyVault.
+- [OpenTracing](https://opentracing.io/) - Enables request level tracing
 
 ## Project Setup
 
@@ -80,6 +81,19 @@ s/api
 
 * VISA request info - [link](./VISA.md)
 * AMEX request info - [link](./AMEX.md)
+* MasterCard request info - [link](./MASTERCARD.md)
+
+Run the following to generate mastercard certs:
+```bash
+s/send_transaction gen-cert
+```
+
+Send random transactions:
+```bash
+s/send_transaction visa
+s/send_transaction mastercard
+s/send_transaction amex
+```
 
 ### Unit Tests
 

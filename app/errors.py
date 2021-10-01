@@ -20,8 +20,16 @@ errors = {
         "message": "The following required parameters were missing from the request: {}",
         "code": falcon.HTTP_400,
     },
-    INVALID_DATA_FORMAT: {"name": "INVALID_DATA_FORMAT", "message": "{}", "code": falcon.HTTP_400},
-    MISSING_AUTH: {"name": "MISSING_AUTH", "message": "Missing Authorization header.", "code": falcon.HTTP_401},
+    INVALID_DATA_FORMAT: {
+        "name": "INVALID_DATA_FORMAT",
+        "message": "{}",
+        "code": falcon.HTTP_400,
+    },
+    MISSING_AUTH: {
+        "name": "MISSING_AUTH",
+        "message": "Missing Authorization header.",
+        "code": falcon.HTTP_401,
+    },
     INVALID_AUTH_FORMAT: {
         "name": "INVALID_AUTH_FORMAT",
         "message": 'Authorization header must be of the format "Authorization: <type> <credentials>".',
