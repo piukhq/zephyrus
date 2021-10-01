@@ -12,6 +12,10 @@ class TestHealthchecks(TestCase):
         super(TestHealthchecks, self).setUp()
         self.app = create_app()
 
+    def test_metrics(self):
+        resp = self.simulate_get("/metrics")
+        self.assertEqual(resp.status_code, 200)
+
     def test_healthz(self):
         resp = self.simulate_get("/healthz")
         self.assertEqual(resp.status_code, 200)

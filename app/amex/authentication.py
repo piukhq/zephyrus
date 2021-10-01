@@ -34,7 +34,10 @@ def jwt_auth(f):
         try:
             client_secrets = load_secrets("data-auth-transactions")
             jose.jwt.decode(
-                token, key=client_secrets["amex"]["secret"], audience="https://api.gb.bink.com", issuer="bink"
+                token,
+                key=client_secrets["amex"]["secret"],
+                audience="https://api.gb.bink.com",
+                issuer="bink",
             )
         except jose.exceptions.ExpiredSignatureError as e:
             raise AuthException(AUTH_EXPIRED) from e

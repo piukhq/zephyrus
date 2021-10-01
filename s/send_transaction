@@ -1,0 +1,183 @@
+#!/usr/bin/env pipenv run python
+import datetime
+import random
+import string
+import subprocess
+import sys
+import uuid
+
+import click
+import lxml.etree as etree
+import requests
+from signxml import XMLSigner
+
+AMEX_CLIENT_ID = 'DWHafwf8OLzbzL7vIQfZ6jXuYsuQf6EShJ4IkKoGBIwNd0xfNG'
+AMEX_CLIENT_SECRET = 'dFuupR8r2TJPYUxpByBVBHHkJiR4nriZDCWndD4755jMsX0usq'
+
+
+def print_request(resp: requests.Response):
+    status = str(resp.status_code)
+    if resp.status_code >= 500:
+        status = click.style(resp.status_code, fg='red')
+    elif resp.status_code >= 400:
+        status = click.style(resp.status_code, fg='orange')
+    elif resp.status_code >= 300:
+        status = click.style(resp.status_code, fg='yellow')
+    elif resp.status_code >= 200:
+        status = click.style(resp.status_code, fg='green')
+    click.echo(f"Status: {status}")
+    click.echo("---")
+    click.echo(resp.text)
+    click.echo()
+
+
+def random_int(length: int) -> str:
+    return "".join(random.choices(string.digits, k=length))
+
+
+@click.group()
+def cli():
+    pass
+
+
+@click.command()
+@click.option("--host", default="http://localhost:9000", help="URL base")
+def visa(host: str):
+    payload = {
+        "CardId": str(uuid.uuid4()),
+        "ExternalUserId": uuid.uuid4().hex,
+        "MessageElementsCollection": [
+            {"Key": "Transaction.PanLastFour", "Value": random_int(4)},
+            {
+                "Key": "Transaction.BillingAmount",
+                "Value": str(random.randrange(0, 1000)),
+            },
+            {
+                "Key": "Transaction.TimeStampYYMMDD",
+                "Value": datetime.datetime.now().isoformat(),
+            },
+            {"Key": "Transaction.MerchantCardAcceptorId", "Value": random_int(8)},
+            {"Key": "Transaction.MerchantAcquirerBin", "Value": random_int(6)},
+            {
+                "Key": "Transaction.TransactionAmount",
+                "Value": str(random.randrange(0, 1000)),
+            },
+            {"Key": "Transaction.VipTransactionId", "Value": random_int(16)},
+            {"Key": "Transaction.VisaMerchantName", "Value": "ICELAND FROZEN FOODS"},
+            {"Key": "Transaction.VisaMerchantId", "Value": random_int(8)},
+            {"Key": "Transaction.VisaStoreName", "Value": "ICELAND FROZEN FOODS"},
+            {"Key": "Transaction.VisaStoreId", "Value": random_int(8)},
+            {"Key": "Transaction.CurrencyCodeNumeric", "Value": random_int(3)},
+            {"Key": "Transaction.BillingCurrencyCode", "Value": random_int(3)},
+            {"Key": "Transaction.SettlementDate", "Value": ""},
+            {"Key": "Transaction.SettlementAmount", "Value": "0"},
+            {"Key": "Transaction.SettlementCurrencyCodeNumeric", "Value": "0"},
+            {
+                "Key": "Transaction.MerchantGroup.0.Name",
+                "Value": "BINK_DEFAULT_MRCH_GRP",
+            },
+            {
+                "Key": "Transaction.MerchantGroup.0.ExternalId",
+                "Value": "ICELAND-BONUS-CARD",
+            },
+            {"Key": "Transaction.AuthCode", "Value": random_int(6)},
+        ],
+        "MessageId": "c4e865b5-e467-440a-bb39-3551366b78d4",
+        "MessageName": "endpoint584723810000000303",
+        "UserDefinedFieldsCollection": [{"Key": "TransactionType", "Value": "AUTH"}],
+        "UserProfileId": "97f52757-22da-448c-8a64-90ebd9dc2e33",
+    }
+    url = host.rstrip('/') + '/auth_transactions/visa'
+    resp = requests.post(url, json=payload)
+    print_request(resp)
+    if resp.status_code != 200:
+        sys.exit(1)
+
+
+@click.command()
+@click.option("--host", default="http://localhost:9000", help="URL base")
+def amex(host: str):
+    jwt_url = host.rstrip('/') + '/auth_transactions/authorize'
+    payload = {'client_id': AMEX_CLIENT_ID, 'client_secret': AMEX_CLIENT_SECRET}
+    resp = requests.post(jwt_url, json=payload)
+    print_request(resp)
+    if resp.status_code != 200:
+        sys.exit(1)
+
+    jwt = resp.json()['api_key']
+
+    headers = {'Authorization': f'Token {jwt}'}
+    auth_url = host.rstrip('/') + '/auth_transactions/amex'
+    payload = {
+      "transaction_time": datetime.datetime.now().isoformat(sep=' '),
+      "transaction_id": random_int(15),
+      "offer_id": "0",
+      "cm_alias":uuid.uuid4().hex,
+      "transaction_amount":str(random.randrange(0, 1000)),
+      "merchant_number":random_int(10),
+      "approval_code":random_int(6),
+      "transaction_currency":"GBP"
+    }
+    resp = requests.post(auth_url, headers=headers, json=payload)
+    print_request(resp)
+    if resp.status_code != 200:
+        sys.exit(1)
+
+
+@click.command()
+@click.option("--host", default="http://localhost:9000", help="URL base")
+@click.option("--cert", default="cert.pem", help="Certificate path")
+@click.option("--key", default="key.pem", help="Key path")
+def mastercard(host: str, cert: str, key: str):
+    auth_url = host.rstrip('/') + '/auth_transactions/mastercard'
+    now = datetime.datetime.now()
+    params = {
+        'refNum': random_int(8),
+        'timestamp': now.isoformat(),
+        'bankCustNum': random_int(27),
+        'transId': random_int(11),
+        'transAmt': str(random.randrange(0, 1000)),
+        'merchNameLoc': 'WASABI',
+        'transDate': now.strftime('%m%d%Y'),
+        'transTime': now.strftime('%H%M%S'),
+        'merchCatCd': random_int(4),
+        'acquirerIca': random_int(6),
+        'retCd': None,
+        'merchId': random_int(7)
+    }
+
+    root = etree.Element('Transaction', nsmap={
+        'xsd': 'http://www.w3.org/2001/XMLSchema',
+        'xsi': 'http://www.w3.org/2001/XMLSchema-instance',
+    })
+    for elem_name, value in params.items():
+        elem = etree.SubElement(root, elem_name)
+        if value is not None:
+            elem.text = value
+
+    cert_data = open(cert, 'r').read()
+    key_data = open(key, 'r').read()
+    signed_root = XMLSigner().sign(root, key=key_data, cert=cert_data)
+    signed_xml = etree.tostring(signed_root)
+
+    headers = {'Content-Type': 'text/xml'}
+    resp = requests.post(auth_url, headers=headers, data=signed_xml)
+    print_request(resp)
+    if resp.status_code != 200:
+        sys.exit(1)
+
+
+@click.command()
+@click.option("--cert", default="cert.pem", help="Certificate path")
+@click.option("--key", default="key.pem", help="Key path")
+def gen_cert(cert: str, key: str):
+    print(subprocess.getoutput(f"openssl req -x509 -nodes -newkey rsa:4096 -keyout {key} -out {cert} -days 365 -subj '/CN=mastercard.com/C=GB'"))
+
+
+cli.add_command(visa)
+cli.add_command(amex)
+cli.add_command(mastercard)
+cli.add_command(gen_cert)
+
+if __name__ == '__main__':
+    cli()

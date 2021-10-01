@@ -121,7 +121,14 @@ def mastercard_request(xml_data):
     except etree.ParseError as e:
         sentry_sdk.capture_exception(e)
         return response_xml, mc_data, f"XML Parse Error: {e}", falcon.HTTP_400
-    except (TypeError, IndexError, KeyError, AttributeError, ValueError, InvalidInput) as e:
+    except (
+        TypeError,
+        IndexError,
+        KeyError,
+        AttributeError,
+        ValueError,
+        InvalidInput,
+    ) as e:
         sentry_sdk.capture_exception(e)
         return response_xml, mc_data, f"Error {e}", falcon.HTTP_400
     except (InvalidCertificate, InvalidSignature, InvalidDigest) as e:
