@@ -25,6 +25,7 @@ KEYVAULT_URI = env_var("KEYVAULT_URI", None)
 
 _tracing_config = Config(
     config={
+        "propagation": "b3",
         "sampler": {
             "type": "probabilistic",
             "param": float(env_var("TRACING_SAMPLE_RATE", "0")),
