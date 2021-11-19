@@ -25,6 +25,8 @@ class VisaView:
             tx_type = "auth"
         elif vop_tx_type == "settle":
             tx_type = "settlement"
+        elif vop_tx_type == "return":
+            tx_type = "return"
         else:
             log.warning(f"Received an unsupported {vop_tx_type} Visa transaction: {req.media}")
             return
