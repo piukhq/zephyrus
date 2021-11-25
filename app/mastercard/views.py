@@ -13,5 +13,4 @@ class MasterCardView:
             req.context.transaction_data,
             provider="mastercard",
             queue_name="mastercard-auth",
-            span=req.context.scope.span,
         )

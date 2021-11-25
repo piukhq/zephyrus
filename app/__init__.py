@@ -7,4 +7,3 @@ __version__ = "1.9"
 # Quieten the azure library
 logging.getLogger("azure").setLevel(logging.WARNING)
 logging.getLogger("amqp").setLevel(logging.INFO)
-logging.getLogger("jaeger_tracing").setLevel(logging.WARNING)

@@ -25,7 +25,6 @@ class AmexView:
             req.media,
             provider="amex",
             queue_name="amex-auth",
-            span=req.context.scope.span,
         )
         resp.media = {"success": True}
 
@@ -38,6 +37,5 @@ class AmexSettlementView:
             req.media,
             provider="amex",
             queue_name="amex-settlement",
-            span=req.context.scope.span,
         )
         resp.media = {"success": True}

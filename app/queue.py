@@ -1,8 +1,6 @@
 import logging
-from typing import Optional, Tuple
+from typing import Tuple
 
-import opentracing
-import opentracing.tags as ot_tags
 from kombu import Connection
 
 import settings
@@ -19,18 +17,8 @@ def add(
     *,
     provider: str,
     queue_name: str,
-    span: Optional[opentracing.Span] = None,
 ) -> None:
     headers: dict[str, str] = {"X-Provider": provider}
-    child_scope: Optional[opentracing.Scope] = None
-
-    if span:
-        child_scope = settings.tracer.start_active_span("queue_add", child_of=span)
-        child_scope.span.set_tag(ot_tags.COMPONENT, "Falcon")
-        child_scope.span.set_tag("provider", provider)
-        child_scope.span.set_tag("queue", queue_name)
-        child_scope.span.set_tag(ot_tags.SPAN_KIND, ot_tags.SPAN_KIND_PRODUCER)
-        settings.tracer.inject(child_scope.span, opentracing.Format.TEXT_MAP, headers)
 
     with Connection(settings.AMQP_DSN, connect_timeout=3) as conn:
         conn.ensure_connection(
@@ -44,9 +32,6 @@ def add(
         q = conn.SimpleQueue(queue_name)
 
         q.put(message, headers=headers)
-
-    if child_scope:
-        child_scope.close()
 
 
 def is_available() -> Tuple[bool, str]:

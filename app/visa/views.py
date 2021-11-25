@@ -34,5 +34,4 @@ class VisaView:
             req.media,
             provider=provider,
             queue_name=f"{provider}-{tx_type}",
-            span=req.context.scope.span,
         )
