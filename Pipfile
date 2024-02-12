@@ -18,6 +18,7 @@ python-jose = "*"
 gunicorn = "*"
 kombu = "*"
 tenacity = "*"
+cryptography = "==37.0.4"
 
 [dev-packages]
 pytest = "*"
