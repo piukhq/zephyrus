@@ -2,7 +2,7 @@ FROM ghcr.io/binkhq/python:3.9
 
 WORKDIR /app
 ADD . .
-RUN pip install pipenv \
+RUN pip install pipenv && \
     pipenv install --system --deploy --ignore-pipfile
 
 ENV PROMETHEUS_MULTIPROC_DIR=/dev/shm
