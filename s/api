@@ -3,4 +3,4 @@
 source s/_common
 
 p 'starting development server'
-pipenv run python wsgi.py
+poetry run python wsgi.py

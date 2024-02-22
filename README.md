@@ -21,7 +21,7 @@ Microservice to process auth transactions.
 
 ## Prerequisites
 
-- [pipenv](https://docs.pipenv.org)
+- [poetry](https://python-poetry.org/docs/)
 
 ## Dependencies
 
@@ -37,18 +37,18 @@ See [project setup](#project-setup) for installation instructions.
 
 ## Project Setup
 
-Pipenv is used for managing project dependencies and execution.
+Poetry is used for managing project dependencies and execution.
 
 ### Virtual Environment
 
 To create a virtualenv and install required software packages:
 
 ```bash
-pipenv install --dev
+poetry install --dev
 ```
 
 Project configuration is done through environment variables. A convenient way to set these is in a `.env` file in the project root. 
-This file will be sourced by Pipenv when `pipenv run` and `pipenv shell` are used. 
+This file will be sourced by Poetry when `poetry run` and `poetry shell` are used. 
 See `settings.py` for configuration options that can be set in this file.
 
 To make a `.env` file from the provided example:
