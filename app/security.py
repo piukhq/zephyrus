@@ -25,9 +25,14 @@ def load_secrets(secret_name: str):
     kv_client = SecretClient(vault_url=settings.KEYVAULT_URI, credential=kv_credential)
 
     try:
-        return json.loads(kv_client.get_secret(secret_name).value)
+        value = kv_client.get_secret(secret_name).value
     except HttpResponseError as e:
         raise Exception(f"Vault Error: {e}") from e
+
+    if value is None:
+        raise Exception(f"Vault Error: {secret_name} not found")
+
+    return json.loads(value)
 
 
 def generate_jwt(slug, credentials):
