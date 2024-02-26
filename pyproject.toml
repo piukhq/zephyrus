@@ -5,10 +5,7 @@ description = ""
 authors = ["Chris Latham <cl@bink.com>"]
 license = "MIT"
 readme = "README.md"
-packages = [
-    { include = "app" },
-    { include = "settings.py" },
-]
+packages = [{ include = "app" }, { include = "settings.py" }]
 
 [tool.poetry.dependencies]
 python = ">=3.8.1"
@@ -39,9 +36,6 @@ gunicorn = "^21.2.0"
 [tool.mypy]
 ignore_missing_imports = true
 
-[tool.black]
+[tool.ruff]
+lint.select = ["I"]
 line-length = 120
-
-[tool.isort]
-profile = "black"
-line_length = 120
