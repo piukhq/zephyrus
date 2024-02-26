@@ -3,7 +3,16 @@ import falcon
 import lxml.etree as etree
 import sentry_sdk
 from OpenSSL.crypto import FILETYPE_PEM, load_certificate
-from signxml import InvalidCertificate, InvalidDigest, InvalidInput, InvalidSignature, XMLVerifier
+from signxml import (
+    DigestAlgorithm,
+    InvalidCertificate,
+    InvalidDigest,
+    InvalidInput,
+    InvalidSignature,
+    SignatureConfiguration,
+    SignatureMethod,
+    XMLVerifier,
+)
 from signxml.util import add_pem_header
 
 from app.errors import CustomException
@@ -72,7 +81,17 @@ def get_valid_signed_data_elements(binary_xml, pem_signing_cert):
     signing_cert = load_certificate(FILETYPE_PEM, add_pem_header(pem_signing_cert))
     cert_subject_name = signing_cert.get_subject().commonName
     assertion_data_elements = (
-        XMLVerifier().verify(binary_xml, x509_cert=pem_signing_cert, cert_subject_name=cert_subject_name).signed_xml
+        XMLVerifier()
+        .verify(
+            binary_xml,
+            x509_cert=pem_signing_cert,
+            cert_subject_name=cert_subject_name,
+            expect_config=SignatureConfiguration(
+                signature_methods={SignatureMethod.RSA_SHA1},
+                digest_algorithms={DigestAlgorithm.SHA1},
+            ),
+        )
+        .signed_xml
     )
     return assertion_data_elements
 

@@ -113,7 +113,16 @@ class SignedXML(BasicXML):
 
         :return: valid_data
         """
-        return XMLVerifier().verify(self.xml, x509_cert=root_cert, cert_subject_name=cert_subject_name).signed_xml
+        return (
+            XMLVerifier()
+            .verify(self.xml, x509_cert=root_cert, cert_subject_name=cert_subject_name)
+            .signed_xml
+        )
+
+
+class XMLSignerSHA1(XMLSigner):
+    def check_deprecated_methods(self):
+        """Disable the SHA1 deprecation error in XMLSigner"""
 
 
 class Certificate:
@@ -169,7 +178,7 @@ class Certificate:
         return self.root_cert.public_bytes(serialization.Encoding.PEM).decode("utf-8")
 
     def sign(self, xml):
-        return XMLSigner(
+        return XMLSignerSHA1(
             method=sign_methods.enveloped,
             signature_algorithm="rsa-sha1",
             digest_algorithm="sha1",
@@ -289,7 +298,6 @@ class MockMastercardAuthTransaction(Transaction):
 {self.signature}</Transaction>"""
 
     def get_signature_from_format(self, signature_value, x509_cert):
-
         return f"""<ds:Signature xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
             <ds:SignedInfo>
                 <ds:CanonicalizationMethod Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/>

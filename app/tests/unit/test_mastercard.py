@@ -145,7 +145,7 @@ class MasterCardAuthTestCases(TestCase):
         tampered_xml = signed_xml.xml.decode("utf8").replace("0.45", "500")
         return_xml, mc_data, message, code = mastercard_request(tampered_xml.encode("utf8"))
         self.assertEqual(mc_data, {})
-        self.assertEqual(message, "Error Digest mismatch for reference 0")
+        self.assertEqual(message, "Error Digest mismatch for reference 0 ()")
         self.assertEqual(code, falcon.HTTP_403)
 
     def test_xml_mastercard_processing_wrong_certificate(self, _):
