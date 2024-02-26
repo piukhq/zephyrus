@@ -65,7 +65,7 @@ The default connection parameters assume a local instance of these services list
 To quickly create docker containers for the required services:
 
 ```bash
-s/services
+scripts/services
 ```
 
 ### Development API Server
@@ -76,7 +76,7 @@ This should be replaced with a WSGI-compatible server for deployment to a live e
 To run the Falcon development server:
 
 ```bash
-s/api
+scripts/api
 ```
 
 * VISA request info - [link](./VISA.md)
@@ -85,14 +85,14 @@ s/api
 
 Run the following to generate mastercard certs:
 ```bash
-s/send_transaction gen-cert
+scripts/send_transaction gen-cert
 ```
 
 Send random transactions:
 ```bash
-s/send_transaction visa
-s/send_transaction mastercard
-s/send_transaction amex
+scripts/send_transaction visa
+scripts/send_transaction mastercard
+scripts/send_transaction amex
 ```
 
 ### Unit Tests
@@ -102,7 +102,7 @@ Testing is done with `pytest`.
 To execute a full test run:
 
 ```bash
-s/test
+scripts/test
 ```
 
 ### Inspecting RabbitMQ
@@ -119,16 +119,6 @@ This will bring up the RabbitMQ management interface which you can see queued tr
 
 There is a Dockerfile provided in the project root. Build an image from this to get a deployment-ready version of the project.
 
-
-
-
-
-
-
-
-
-
-  
 - Install on azure the Mastercard Signing certificate (required to use auth transaction messages from mastercard)
   - A signing certificate in pem format should be uploaded to the defined location 
   
@@ -163,12 +153,10 @@ Lpap25Wk9tNe6KWqgggrxscUjV1ArCxgoZmXPj3ndLZwDeKMgiPz6p+h2spTYhPa
 Iaw=
 -----END CERTIFICATE-----
 ~~~~
- 
-  
+
 #### Environment Variables
 
 - `VAULT_URL`
   - String value, URL to Hashicorp Vault
 - `VAULT_TOKEN`
   - String value, Access token for Hashicorp Vault. Obtained from Kubernetes secrets.
-
