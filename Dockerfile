@@ -3,7 +3,8 @@ FROM ghcr.io/binkhq/python:3.9
 WORKDIR /app
 ADD . .
 RUN pip install poetry && \
-    poetry install --system --deploy --ignore-pipfile
+    poetry config virtualenvs.create false && \
+    poetry install --without=dev
 
 ENV PROMETHEUS_MULTIPROC_DIR=/dev/shm
 ENTRYPOINT [ "linkerd-await", "--" ]

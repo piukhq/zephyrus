@@ -44,7 +44,7 @@ Poetry is used for managing project dependencies and execution.
 To create a virtualenv and install required software packages:
 
 ```bash
-poetry install --dev
+poetry install
 ```
 
 Project configuration is done through environment variables. A convenient way to set these is in a `.env` file in the project root. 
