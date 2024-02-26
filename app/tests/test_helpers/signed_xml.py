@@ -77,7 +77,6 @@ class Transaction:
 
 class SignedXML(BasicXML):
     def __init__(self, transaction, signing_cert=None):
-
         if not signing_cert:
             self.signing_cert = Certificate()
         else:
@@ -113,11 +112,7 @@ class SignedXML(BasicXML):
 
         :return: valid_data
         """
-        return (
-            XMLVerifier()
-            .verify(self.xml, x509_cert=root_cert, cert_subject_name=cert_subject_name)
-            .signed_xml
-        )
+        return XMLVerifier().verify(self.xml, x509_cert=root_cert, cert_subject_name=cert_subject_name).signed_xml
 
 
 class XMLSignerSHA1(XMLSigner):
