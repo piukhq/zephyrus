@@ -1,6 +1,3 @@
 #! /bin/bash
-
 source scripts/_common
-
-p 'starting development server'
 poetry run python wsgi.py

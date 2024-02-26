@@ -1,6 +1,3 @@
 #! /bin/bash
-
 source scripts/_common
-
-p 'running tests'
 pytest --verbose --cov app --cov-report=xml --junitxml=report.xml app/tests/unit
