@@ -1,4 +1,4 @@
-#!/usr/bin/env pipenv run python
+#!/usr/bin/env poetry run python
 import datetime
 import random
 import string
