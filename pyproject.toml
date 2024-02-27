@@ -1,3 +1,7 @@
+[build-system]
+requires = ["poetry-core>=1.0.0", "poetry-dynamic-versioning>=1.0.0,<2.0.0"]
+build-backend = "poetry_dynamic_versioning.backend"
+
 [tool.poetry]
 name = "zephyrus"
 version = "0.0.0"
@@ -6,6 +10,9 @@ authors = ["Chris Latham <cl@bink.com>"]
 license = "MIT"
 readme = "README.md"
 packages = [{ include = "app" }, { include = "settings.py" }]
+
+[tool.poetry-dynamic-versioning]
+enable = true
 
 [tool.poetry.dependencies]
 python = ">=3.8.1"
