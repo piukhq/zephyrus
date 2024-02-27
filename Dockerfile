@@ -1,14 +1,25 @@
+FROM ghcr.io/binkhq/python:3.9 AS build
+
+WORKDIR /src
+
+RUN apt update && apt -y install git
+RUN pip install poetry
+RUN poetry self add "poetry-dynamic-versioning[plugin]"
+
+COPY . .
+
+RUN poetry build
+
 FROM ghcr.io/binkhq/python:3.9
 
-WORKDIR /app
-ADD . .
-RUN pip install poetry && \
-    poetry config virtualenvs.create false && \
-    poetry install --without=dev
+ARG PIP_INDEX_URL
 
-ENV PROMETHEUS_MULTIPROC_DIR=/dev/shm
-ENTRYPOINT [ "linkerd-await", "--" ]
-CMD [ "gunicorn", "--workers=2", "--threads=2", "--error-logfile=-", \
-    "--logger-class=gunicorn_logger.Logger", \
-    "--access-logfile=-", "--bind=0.0.0.0:9000", \
-    "--bind=0.0.0.0:9100", "wsgi:app" ]
+WORKDIR /app
+
+COPY --from=build /src/dist/*.whl .
+RUN pip install *.whl && rm *.whl
+
+COPY --from=build /src/wsgi.py .
+
+CMD [ "gunicorn", "--workers=2", "--threads=2", "--error-logfile=-", "--logger-class=gunicorn_logger.Logger", \
+    "--access-logfile=-", "--bind=0.0.0.0:9000", "wsgi:app" ]

@@ -9,7 +9,7 @@ description = ""
 authors = ["Chris Latham <cl@bink.com>"]
 license = "MIT"
 readme = "README.md"
-packages = [{ include = "app" }, { include = "settings.py" }]
+packages = [{ include = "app" }, { include = "settings.py" }, { include = "gunicorn_logger.py" }]
 
 [tool.poetry-dynamic-versioning]
 enable = true
