@@ -1,6 +1,3 @@
 #! /bin/bash
-
-source s/_common
-
-p 'removing services'
+source scripts/_common
 docker rm -f txm-rabbitmq || true

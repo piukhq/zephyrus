@@ -1,0 +1,6 @@
+#! /bin/bash
+source scripts/_common
+ruff check .
+ruff format --check .
+xenon --max-average A --max-modules B --max-absolute B .
+mypy --ignore-missing-imports app

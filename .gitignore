@@ -8,3 +8,6 @@ __pycache__
 .mypy_cache
 cert.pem
 key.pem
+coverage.xml
+.coveragerc
+report.xml

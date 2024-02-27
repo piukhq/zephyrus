@@ -1,0 +1,3 @@
+#! /bin/bash
+source scripts/_common
+pytest --verbose --cov app --cov-report=xml --junitxml=report.xml app/tests/unit

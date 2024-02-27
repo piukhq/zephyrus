@@ -1,9 +1,65 @@
-[tool.mypy]
-ignore_missing_imports = true
+[build-system]
+requires = ["poetry-core>=1.0.0", "poetry-dynamic-versioning>=1.0.0,<2.0.0"]
+build-backend = "poetry_dynamic_versioning.backend"
 
-[tool.black]
+[tool.poetry]
+name = "zephyrus"
+version = "0.0.0"
+description = ""
+authors = ["Chris Latham <cl@bink.com>"]
+license = "MIT"
+readme = "README.md"
+packages = [{ include = "app" }, { include = "settings.py" }, { include = "gunicorn_logger.py" }]
+
+[tool.poetry-dynamic-versioning]
+enable = true
+
+[tool.poetry.dependencies]
+python = ">=3.8.1"
+falcon = "^3.1.3"
+sentry-sdk = { version = "^1.40.5", extras = ["falcon"] }
+python-jose = "^3.3.0"
+arrow = "^1.3.0"
+azure-keyvault-secrets = "^4.8.0"
+azure-identity = "^1.15.0"
+tenacity = "^8.2.3"
+kombu = "^5.3.5"
+prometheus-client = "^0.20.0"
+lxml = "^5.1.0"
+requests = "^2.31.0"
+signxml = "^3.2.2"
+voluptuous = "^0.14.2"
+gunicorn = "^21.2.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.0.1"
+pytest-cov = "^4.1.0"
+werkzeug = "^3.0.1"
+mypy = "^1.8.0"
+freezegun = "^1.4.0"
+ptpython = "^3.0.26"
+xenon = "^0.9.1"
+lxml-stubs = "^0.5.1"
+types-pygments = "^2.17.0.20240106"
+types-colorama = "^0.4.15.20240205"
+types-python-jose = "^3.3.4.20240106"
+types-requests = "^2.31.0.20240218"
+types-setuptools = "^69.1.0.20240223"
+types-pyopenssl = "^24.0.0.20240130"
+ruff = "^0.2.2"
+
+[tool.ruff]
+lint.select = ["I"]
 line-length = 120
 
-[tool.isort]
-profile = "black"
-line_length = 120
+[[tool.mypy.overrides]]
+module = "falcon.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "kombu"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "gunicorn.*"
+ignore_missing_imports = true
